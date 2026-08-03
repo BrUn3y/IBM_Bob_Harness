@@ -1,0 +1,18 @@
+[Unit]
+# Template systemd unit for the Bob Harness. Do NOT install this file directly —
+# run ./deploy/install-service.sh, which substitutes __USER__ and __REPO__ for
+# the current user and repo path and writes it to /etc/systemd/system/.
+Description=IBM Bob Harness (REST API + Slack bot)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__REPO__
+ExecStart=__REPO__/deploy/run-harness.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
