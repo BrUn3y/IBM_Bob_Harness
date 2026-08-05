@@ -41,25 +41,37 @@ case "${1:-serve}" in
     exec uvicorn server:app --host 0.0.0.0 --port 8080
     ;;
   serve-all)
-    # Single-container mode: run the REST API AND the Slack bot side by side.
-    # The bot reaches the API over localhost. If either process dies, we exit so
-    # the container's restart policy brings the whole thing back up.
-    echo "Bob harness: starting REST API + Slack bot in one container"
+    # Single-container mode: run the REST API AND (optionally) the Slack bot.
+    # The bot is only started when SLACK_BOT_TOKEN and SLACK_APP_TOKEN are set.
+    # If either token is absent, we fall back to API-only mode so the container
+    # starts successfully without Slack credentials.
+    if [ -n "${SLACK_BOT_TOKEN:-}" ] && [ -n "${SLACK_APP_TOKEN:-}" ]; then
+      SLACK_ENABLED=true
+      echo "Bob harness: starting REST API + Slack bot in one container"
+    else
+      SLACK_ENABLED=false
+      echo "Bob harness: SLACK_BOT_TOKEN / SLACK_APP_TOKEN not set — starting REST API only (Slack bot disabled)"
+    fi
     start_cron
     cd /app
     uvicorn server:app --host 0.0.0.0 --port 8080 &
     api=$!
-    # Wait for the API to answer before starting the bot (avoids early errors).
-    for _ in $(seq 1 30); do
-      curl -fsS http://localhost:8080/health >/dev/null 2>&1 && break
-      sleep 0.5
-    done
-    HARNESS_URL="${HARNESS_URL:-http://localhost:8080}" python3 slack_bot.py &
-    bot=$!
-    wait -n "$api" "$bot"
-    ec=$?
-    kill "$api" "$bot" 2>/dev/null || true
-    exit "$ec"
+    if [ "$SLACK_ENABLED" = true ]; then
+      # Wait for the API to answer before starting the bot (avoids early errors).
+      for _ in $(seq 1 30); do
+        curl -fsS http://localhost:8080/health >/dev/null 2>&1 && break
+        sleep 0.5
+      done
+      HARNESS_URL="${HARNESS_URL:-http://localhost:8080}" python3 slack_bot.py &
+      bot=$!
+      wait -n "$api" "$bot"
+      ec=$?
+      kill "$api" "$bot" 2>/dev/null || true
+      exit "$ec"
+    else
+      wait "$api"
+      exit $?
+    fi
     ;;
   slack)
     # Bidirectional Slack bot (Socket Mode). Talks to the REST API over HTTP,
