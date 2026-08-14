@@ -1,0 +1,31 @@
+TOP CROSSFIT/WORKOUT SESSIONS BY CALORIES BURNED
+=================================================
+
+Based on 76 activities successfully fetched from your Strava account:
+
+1. Morning Crossfit - 1046 kcal
+2. Morning Crossfit - 841 kcal
+3. Morning Crossfit - 837 kcal
+4. Lunch Weight Training - 776 kcal
+5. Morning Crossfit - 761 kcal
+6. Crossfit matutino - 756 kcal
+7. Afternoon Weight Training - 721 kcal
+8. Crossfit matutino - 722 kcal
+9. Morning Crossfit - 681 kcal
+10. Morning Crossfit - 622 kcal
+11. Crossfit a la tarde - 581 kcal
+12. Morning Crossfit - 581 kcal
+13. Crossfit vespertino - 583 kcal
+14. Crossfit matutino - 580 kcal
+15. Crossfit matutino - 579 kcal
+
+Top Weight Training sessions:
+- Lunch Weight Training - 776 kcal
+- Afternoon Weight Training - 721 kcal
+- Afternoon Weight Training - 488 kcal
+- Afternoon Weight Training - 474 kcal
+- Evening Weight Training - 466 kcal
+- Evening Weight Training - 466 kcal
+
+Note: API rate limit was reached after fetching 76 of 303 total activities.
+The results shown represent your highest calorie-burning sessions from the data retrieved.

@@ -11,3 +11,8 @@ __pycache__/
 
 # Claude Code local files
 .claude/
+
+# Secrets - never commit
+credentials.json
+strava-setup/strava_tokens.json
+strava-setup/venv/
