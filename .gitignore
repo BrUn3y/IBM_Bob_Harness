@@ -16,10 +16,3 @@ __pycache__/
 credentials.json
 strava-setup/strava_tokens.json
 strava-setup/venv/
-
-# Separate git repositories (not submodules)
-Brun3y/
-google-fit-api-setup/
-google-health-api-setup/
-huawei-health-setup/
-strava-analytics/
