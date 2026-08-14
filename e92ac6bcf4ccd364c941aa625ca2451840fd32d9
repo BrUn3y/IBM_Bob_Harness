@@ -1,0 +1,7 @@
+{"id":"eb1be76a-2a38-4b53-859f-b151cf77bbc6","ts":"2026-08-14T21:57:57.168Z","path":"/home/brun3y/IBM_Bob_Harness/BACKUP_RESTORE.md","version":"1.0.0","taskID":"9ac2d13b-6935-4806-ac1a-16b69694b70d"}
+{"id":"faf16f8c-d7f7-4071-9d15-ad8a2a58b84a","ts":"2026-08-14T21:58:06.878Z","path":"/home/brun3y/IBM_Bob_Harness/backup-manifest.md","version":"1.0.0","taskID":"9ac2d13b-6935-4806-ac1a-16b69694b70d"}
+{"id":"2836f40b-2d23-4dc3-9a43-d5d5380bae9a","ts":"2026-08-14T21:58:15.048Z","path":"/home/brun3y/IBM_Bob_Harness/secrets.required.example","version":"1.0.0","taskID":"9ac2d13b-6935-4806-ac1a-16b69694b70d"}
+{"id":"cb29f08e-daa6-4d75-8df0-06832ff9a8f6","ts":"2026-08-14T22:01:30.060Z","path":"/home/brun3y/IBM_Bob_Harness/BACKUP_RESTORE.md","version":"1.0.0","taskID":"6c755378-bcb0-4d7c-a6b6-7c99fb7f6274"}
+{"id":"8d52450a-a8ce-436a-ab7b-43a7713778ca","ts":"2026-08-14T22:02:15.279Z","path":"/home/brun3y/IBM_Bob_Harness/backup-manifest.md","version":"1.0.0","taskID":"6c755378-bcb0-4d7c-a6b6-7c99fb7f6274"}
+{"id":"9e8fb3f3-f181-49a7-97b4-96de0e82ed76","ts":"2026-08-14T22:02:32.926Z","path":"/home/brun3y/IBM_Bob_Harness/backup-secrets.sh","version":"1.0.0","taskID":"6c755378-bcb0-4d7c-a6b6-7c99fb7f6274"}
+{"id":"4d48f9d7-9d3a-4ea9-a42a-ec7f84d07c11","ts":"2026-08-14T22:02:50.449Z","path":"/home/brun3y/IBM_Bob_Harness/restore-secrets.sh","version":"1.0.0","taskID":"6c755378-bcb0-4d7c-a6b6-7c99fb7f6274"}
