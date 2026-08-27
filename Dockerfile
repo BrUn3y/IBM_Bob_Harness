@@ -35,7 +35,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
 # release tarball via npm (which is what the installer does under the hood).
 # Bump BOB_VERSION to upgrade. Verify releases at:
 #   https://s3.us-south.cloud-object-storage.appdomain.cloud/bob-shell/bobshell-version.txt
-ARG BOB_VERSION=1.0.5
+ARG BOB_VERSION=2.0.1
 RUN npm install -g --loglevel=error \
         "https://s3.us-south.cloud-object-storage.appdomain.cloud/bob-shell/bobshell-${BOB_VERSION}.tgz" \
     && bob --version
