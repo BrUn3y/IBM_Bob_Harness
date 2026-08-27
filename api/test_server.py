@@ -81,11 +81,11 @@ def test_invoke_success_builds_default_command(client):
     cmd = run.call_args.args[0]
     assert cmd == [
         "bob",
+        "run",
         "--accept-license",
-        "-p",
+        "--mode",
+        "unrestricted-dev",
         "say ok",
-        "--chat-mode=unrestricted-dev",
-        "--yolo",
     ]
     # Runs in the default workdir.
     assert run.call_args.kwargs["cwd"] == server.DEFAULT_WORKDIR
@@ -108,7 +108,7 @@ def test_invoke_custom_mode_and_workdir(client):
             json={"prompt": "x", "mode": "reviewer", "workdir": "/tmp/proj"},
         )
     cmd = run.call_args.args[0]
-    assert "--chat-mode=reviewer" in cmd
+    assert "--mode" in cmd and "reviewer" in cmd
     assert run.call_args.kwargs["cwd"] == "/tmp/proj"
 
 

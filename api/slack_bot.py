@@ -169,17 +169,31 @@ def _strip_noise(text: str) -> str:
     return text.strip()
 
 
-def clean_output(raw: str) -> str:
-    """Extract Bob's final answer from its noisy headless transcript.
+_BOB2_SEPARATOR_RE = re.compile(r"\n[──]{20,}\n")
+_BOB2_ASSISTANT_RE = re.compile(r"^Assistant\s*\(\d+\)[^\n]*\n(.*)", re.DOTALL)
 
-    Bob emits one ``---output---<result>---output---`` block per tool use, so a
-    transcript can contain several. The real answer is the LAST block with
-    content (the ``attempt_completion`` output), not the first (which is often a
-    tool summary like "Listed 20 item(s)."). We therefore scan blocks from the
-    end and return the first non-empty one after stripping reasoning/tool noise.
-    Without any marker we just strip noise from the whole transcript.
+
+def _extract_bob2_answer(text: str) -> str:
+    """Extract the last assistant reply from a bob 2.x separator-delimited transcript."""
+    for segment in reversed(_BOB2_SEPARATOR_RE.split(text)):
+        m = _BOB2_ASSISTANT_RE.match(segment.strip())
+        if m:
+            return m.group(1).strip()
+    return ""
+
+
+def clean_output(raw: str) -> str:
+    """Extract Bob's final answer from its headless transcript.
+
+    bob 2.x: separator-delimited transcript — extract the last Assistant block.
+    bob 1.x: ``---output---`` markers — return the last non-empty block.
+    Fallback: strip noise from the whole output.
     """
     text = raw or ""
+    if _BOB2_SEPARATOR_RE.search(text):
+        answer = _extract_bob2_answer(text)
+        if answer:
+            return _strip_noise(answer)
     if _OUTPUT_MARKER in text:
         for segment in reversed(text.split(_OUTPUT_MARKER)):
             cleaned = _strip_noise(segment)

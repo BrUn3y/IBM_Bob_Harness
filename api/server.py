@@ -130,10 +130,8 @@ def _resolve(req: InvokeRequest) -> tuple[str, str]:
 
 
 def _bob_cmd(prompt: str, mode: str, yolo: bool) -> list[str]:
-    cmd = [BOB_BIN, "--accept-license", "-p", prompt, f"--chat-mode={mode}"]
-    if yolo:
-        cmd.append("--yolo")
-    return cmd
+    # bob 2.x: 'run' subcommand replaces top-level --chat-mode; headless auto-approves
+    return [BOB_BIN, "run", "--accept-license", "--mode", mode, prompt]
 
 
 # --------------------------------------------------------------------------- #
