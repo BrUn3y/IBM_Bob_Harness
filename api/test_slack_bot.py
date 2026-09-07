@@ -6,6 +6,7 @@ is mocked, so they run fast and offline (same discipline as test_server.py).
 import io
 import json
 import logging
+import os
 import threading
 import time
 import urllib.error
@@ -35,6 +36,16 @@ def test_should_handle_rejects_empty_text():
     assert not slack_bot.should_handle({"channel": "C1"})
 
 
+def test_should_handle_accepts_file_only_message():
+    event = {
+        "subtype": "file_share",
+        "files": [{"id": "F1", "name": "photo.png"}],
+        "channel": "C1",
+        "user": "U1",
+    }
+    assert slack_bot.should_handle(event)
+
+
 def test_should_handle_respects_allowlist():
     ev = {"text": "hi", "channel": "C_OTHER"}
     assert not slack_bot.should_handle(ev, allowed_channels={"C_OK"})
@@ -45,6 +56,152 @@ def test_parse_allowed():
     assert slack_bot._parse_allowed(None) is None
     assert slack_bot._parse_allowed("") is None
     assert slack_bot._parse_allowed(" C1 , C2 ,") == {"C1", "C2"}
+
+
+# --------------------------------------------------------------------------- #
+# Slack attachments
+# --------------------------------------------------------------------------- #
+def test_download_slack_file_uses_auth_and_safe_name(tmp_path):
+    captured = {}
+
+    class FileResponse:
+        def __init__(self):
+            self.stream = io.BytesIO(b"image-bytes")
+
+        def read(self, size=-1):
+            return self.stream.read(size)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def fake_urlopen(request, timeout=None):
+        captured["auth"] = request.headers.get("Authorization")
+        captured["url"] = request.full_url
+        return FileResponse()
+
+    files = [{
+        "id": "F123",
+        "name": "../../photo.png",
+        "mimetype": "image/png",
+        "size": 11,
+        "url_private_download": "https://files.slack.test/photo",
+    }]
+    with patch.object(slack_bot.urllib.request, "urlopen", side_effect=fake_urlopen):
+        downloaded, errors = slack_bot.download_slack_files(
+            files, token="xoxb-secret", dest_dir=str(tmp_path), max_bytes=100
+        )
+
+    assert errors == []
+    assert captured == {
+        "auth": "Bearer xoxb-secret",
+        "url": "https://files.slack.test/photo",
+    }
+    assert downloaded[0]["path"] == str(tmp_path / "F123_photo.png")
+    assert (tmp_path / "F123_photo.png").read_bytes() == b"image-bytes"
+
+
+def test_download_slack_file_rejects_oversize_without_network(tmp_path):
+    files = [{"name": "large.pdf", "size": 101, "url_private": "https://files/x"}]
+    with patch.object(slack_bot.urllib.request, "urlopen") as urlopen:
+        downloaded, errors = slack_bot.download_slack_files(
+            files, token="x", dest_dir=str(tmp_path), max_bytes=100
+        )
+    assert downloaded == []
+    assert "exceeds" in errors[0]
+    urlopen.assert_not_called()
+
+
+def test_add_attachments_to_prompt_includes_local_path_and_default_request():
+    prompt = slack_bot.add_attachments_to_prompt(
+        "",
+        [{"path": "/workspace/slack_uploads/F1_photo.png", "name": "photo.png", "mimetype": "image/png"}],
+        [],
+    )
+    assert "Analyze the attached files" in prompt
+    assert "/workspace/slack_uploads/F1_photo.png" in prompt
+    assert "untrusted user-provided content" in prompt
+
+
+def test_cleanup_uploads_applies_ttl_then_total_quota(tmp_path):
+    now = 1_000_000
+    old = tmp_path / "C1" / "T1" / "F1_old.txt"
+    quota_old = tmp_path / "C1" / "T2" / "F2_middle.txt"
+    newest = tmp_path / "C1" / "T3" / "F3_new.txt"
+    for path, content, modified in (
+        (old, b"x" * 10, now - 200),
+        (quota_old, b"y" * 8, now - 20),
+        (newest, b"z" * 8, now - 10),
+    ):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+        os.utime(path, (modified, modified))
+
+    result = slack_bot.cleanup_uploads(
+        str(tmp_path), ttl_seconds=100, max_total_bytes=10, now=now
+    )
+
+    assert not old.exists()
+    assert not quota_old.exists()
+    assert newest.exists()
+    assert result == {"removed_files": 2, "removed_bytes": 18, "remaining_bytes": 8}
+
+
+def test_cleanup_upload_loop_runs_periodically_and_stops(tmp_path):
+    expired = tmp_path / "expired.txt"
+    expired.write_text("old")
+    os.utime(expired, (1, 1))
+    stop = threading.Event()
+    worker = threading.Thread(
+        target=slack_bot._cleanup_upload_loop,
+        args=(str(tmp_path), 1, 1024, 0.01, threading.Lock(), stop),
+    )
+    worker.start()
+    for _ in range(50):
+        if not expired.exists():
+            break
+        time.sleep(0.01)
+    stop.set()
+    worker.join(timeout=1)
+    assert not worker.is_alive()
+    assert not expired.exists()
+
+
+def test_list_thread_attachments_restores_prior_files(tmp_path):
+    first = tmp_path / "F1_photo.png"
+    second = tmp_path / "F2_notes.txt"
+    hidden = tmp_path / ".download-partial"
+    first.write_bytes(b"png")
+    second.write_text("notes")
+    hidden.write_bytes(b"partial")
+
+    attachments = slack_bot.list_thread_attachments(str(tmp_path))
+
+    assert [item["name"] for item in attachments] == ["photo.png", "notes.txt"]
+    assert attachments[0]["mimetype"] == "image/png"
+    prompt = slack_bot.add_attachments_to_prompt("¿qué dice la imagen anterior?", attachments, [])
+    assert str(first) in prompt and str(second) in prompt
+
+
+def test_processing_gate_deduplicates_and_limits_concurrency():
+    gate = slack_bot.ProcessingGate(max_concurrent=1, event_ttl_seconds=10)
+    assert gate.begin("E1", now=100) == "accepted"
+    assert gate.begin("E1", now=101) == "duplicate"
+    assert gate.begin("E2", now=101) == "busy"
+    gate.end()
+    assert gate.begin("E2", now=102) == "accepted"
+    gate.end()
+    assert gate.begin("E1", now=111) == "accepted"
+    gate.end()
+
+
+def test_event_key_prefers_event_id_then_client_message_id():
+    event = {"client_msg_id": "M1", "channel": "C1", "ts": "123.4"}
+    assert slack_bot.event_key({"event_id": "E1"}, event) == "E1"
+    assert slack_bot.event_key({}, event) == "M1"
+    assert slack_bot.event_key({}, {"channel": "C1", "ts": "123.4"}) == "C1:123.4"
 
 
 # --------------------------------------------------------------------------- #
@@ -108,6 +265,70 @@ def test_run_prompt_handles_unreachable_harness():
 
 
 # --------------------------------------------------------------------------- #
+# Cancellable harness jobs
+# --------------------------------------------------------------------------- #
+def test_start_job_posts_async_request():
+    response = _FakeResp({"id": "job123", "status": "pending"})
+    with patch.object(slack_bot.urllib.request, "urlopen", return_value=response) as urlopen:
+        job_id, error = slack_bot.start_job(
+            "do it", harness_url="http://h:8080", mode="reviewer", workdir="/", timeout=42
+        )
+    request = urlopen.call_args.args[0]
+    assert job_id == "job123" and error == ""
+    assert request.full_url == "http://h:8080/jobs"
+    assert request.method == "POST"
+    assert json.loads(request.data.decode()) == {
+        "prompt": "do it",
+        "timeout": 42,
+        "mode": "reviewer",
+        "workdir": "/",
+    }
+
+
+def test_wait_for_job_returns_clean_completed_output():
+    responses = [
+        _FakeResp({"id": "job123", "status": "running", "output": ""}),
+        _FakeResp({"id": "job123", "status": "completed", "output": "---output---\ndone\n---output---"}),
+    ]
+    with patch.object(slack_bot.urllib.request, "urlopen", side_effect=responses), \
+         patch.object(slack_bot.time, "sleep"):
+        result = slack_bot.wait_for_job(
+            "job123", harness_url="http://h:8080", timeout=10, poll_interval=0
+        )
+    assert result == "done"
+
+
+def test_wait_for_job_reports_cancelled():
+    response = _FakeResp({"id": "job123", "status": "cancelled", "output": ""})
+    with patch.object(slack_bot.urllib.request, "urlopen", return_value=response):
+        result = slack_bot.wait_for_job("job123", harness_url="http://h:8080", timeout=10)
+    assert "cancelled" in result
+
+
+def test_cancel_job_sends_delete():
+    response = _FakeResp({"id": "job123", "status": "cancelling", "cancel_requested": True})
+    with patch.object(slack_bot.urllib.request, "urlopen", return_value=response) as urlopen:
+        requested, message = slack_bot.cancel_job("job123", harness_url="http://h:8080")
+    request = urlopen.call_args.args[0]
+    assert requested is True and "requested" in message
+    assert request.full_url == "http://h:8080/jobs/job123"
+    assert request.method == "DELETE"
+
+
+def test_cancel_commands_and_active_job_registry():
+    assert slack_bot.is_cancel_command("  CANCELAR ")
+    assert slack_bot.is_cancel_command("/bob cancel")
+    assert not slack_bot.is_cancel_command("cancelar el schedule de mañana")
+    registry = slack_bot.ActiveJobRegistry()
+    registry.set("C1", "T1", "job123")
+    assert registry.get("C1", "T1") == "job123"
+    registry.remove("C1", "T1", "different")
+    assert registry.get("C1", "T1") == "job123"
+    registry.remove("C1", "T1", "job123")
+    assert registry.get("C1", "T1") is None
+
+
+# --------------------------------------------------------------------------- #
 # clean_output
 # --------------------------------------------------------------------------- #
 def test_clean_output_extracts_answer_between_markers():
@@ -140,6 +361,17 @@ def test_clean_output_strips_thinking_and_tool_noise_without_markers():
 
 def test_clean_output_empty():
     assert slack_bot.clean_output("") == ""
+
+
+def test_clean_output_extracts_bob2_answer_and_removes_cli_rules():
+    raw = (
+        "\x1b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n"
+        "User (1)\nactualiza el perfil\n"
+        "────────────────────────────────\n"
+        "Assistant (2) final\nPushed successfully.\n────\n"
+        "════════════════════════════════\n"
+    )
+    assert slack_bot.clean_output(raw) == "Pushed successfully."
 
 
 def test_run_prompt_cleans_success_output():
@@ -203,10 +435,13 @@ def test_build_reply_bulleted_list_stays_plain():
     assert reply == msg
 
 
-def test_build_reply_truncates_long_output():
-    reply = slack_bot.build_reply("a" * (slack_bot.MAX_REPLY_CHARS + 500))
-    assert "output truncated" in reply
-    assert len(reply) < slack_bot.MAX_REPLY_CHARS + 100
+def test_build_replies_preserves_long_output_without_truncation():
+    text = "A" * 2000 + "\n\n" + "B" * 2000
+    replies = slack_bot.build_replies(text)
+    assert len(replies) == 2
+    assert all(len(reply) <= slack_bot.MAX_REPLY_CHARS for reply in replies)
+    assert "\n\n".join(replies) == text
+    assert all("output truncated" not in reply for reply in replies)
 
 
 # --------------------------------------------------------------------------- #
@@ -271,6 +506,19 @@ def test_format_thread_caps_message_count():
     msgs = [{"ts": str(i), "text": f"m{i}", "user": "U1"} for i in range(40)]
     out = slack_bot.format_thread(msgs)
     assert len(out.splitlines()) == slack_bot.MAX_HISTORY_MESSAGES
+
+
+def test_format_thread_keeps_prior_file_share_context():
+    msgs = [{
+        "ts": "1",
+        "subtype": "file_share",
+        "text": "compara esta captura",
+        "files": [{"name": "before.png"}],
+        "user": "U1",
+    }]
+    assert slack_bot.format_thread(msgs) == (
+        "User: compara esta captura\n[shared files: before.png]"
+    )
 
 
 def test_build_conversation_prompt_without_history_has_guidance_and_message():

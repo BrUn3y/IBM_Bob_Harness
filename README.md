@@ -4,14 +4,14 @@
   <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExendtcTVyMmRhejk3MngzNTMxdnk1NWxkd3dhcnJzYnFhb3N3enl4dSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/V5Zao1FEKouvd4p2Wd/giphy.gif" alt="Bob Harness" width="480">
 </p>
 
-A Docker container that runs **Bob Shell** (IBM) autonomously, with a
+A container that runs **Bob Shell** (IBM) autonomously, with a
 **custom unrestricted mode**, a **REST API** to consume it programmatically, an
 **orchestration loop** that verifies results and retries until they pass, and a
 **bidirectional Slack bot**.
 
 > Bob Shell has **no** native server mode. This project wraps its headless
-> `bob -p "<prompt>" --yolo --chat-mode=unrestricted-dev` invocation and adds a
-> verify/retry loop on top (API version `1.2.0`).
+> `bob run --accept-license --mode unrestricted-dev "<prompt>"` invocation and adds a
+> verify/retry loop on top (API version `1.4.0`).
 
 ## What's included
 
@@ -23,7 +23,7 @@ A Docker container that runs **Bob Shell** (IBM) autonomously, with a
 | `.bob/custom_modes.yaml` | `unrestricted-dev` mode: full access (read/edit/command/browser/mcp) |
 | `.bob/rules-unrestricted-dev/AGENT.md` | Persistent context/rules for the mode (loaded by Bob at runtime) |
 | `api/server.py` | FastAPI app that shells out to `bob` (invoke / jobs / run / stream) |
-| `api/slack_bot.py` | Bidirectional Slack bot (Socket Mode) that forwards messages to `/invoke` |
+| `api/slack_bot.py` | Bidirectional Slack bot (Socket Mode) that manages cancellable `/jobs` |
 | `api/schedules.py` | Cron scheduler: persisted registry + root crontab generation |
 | `slack/manifest.yaml` | Slack App manifest (scopes + `message.channels` + Socket Mode) |
 | `api/test_server.py` / `test_slack_bot.py` | Unit tests (mock `subprocess`/network, offline) |
@@ -64,6 +64,7 @@ Bob reads `/.bob/rules-unrestricted-dev/AGENT.md` at runtime.
 | `POST` | `/run` | **Orchestrated** run: execute → verify → retry → `{id}` |
 | `GET` | `/jobs` | List runs/jobs |
 | `GET` | `/jobs/{id}` | Status + output (+ `attempts` for `/run`) |
+| `DELETE` | `/jobs/{id}` | Cancel an active job or orchestrated run |
 | `GET` | `/jobs/{id}/stream` | Stream a run's output live (SSE) |
 | `POST` | `/stream` | Start a job **and** stream it in one request (SSE) |
 | `POST` | `/schedules` | Register a recurring run (cron) → `{schedule}` |
@@ -77,7 +78,7 @@ Bob reads `/.bob/rules-unrestricted-dev/AGENT.md` at runtime.
 
 ## How to start (quickstart)
 
-Get the container up in three steps. Requires Docker (or Podman) installed.
+Get the container up in three steps. Requires Podman (or Docker) installed.
 
 ```bash
 # 1. Configure secrets: copy the template and fill in your keys.
@@ -86,9 +87,9 @@ cp .env.example .env
 #    - (Optional, for Slack) paste SLACK_BOT_TOKEN + SLACK_APP_TOKEN (see §4).
 
 # 2. Build the image and start the container (REST API + Slack bot).
-docker compose up --build
+podman compose up --build
 #    Add -d to run it detached in the background:
-#    docker compose up --build -d
+#    podman compose up --build -d
 
 # 3. Check it's alive.
 curl http://localhost:8080/health
@@ -101,19 +102,19 @@ invited to.
 **Managing the container**
 
 ```bash
-docker compose logs -f bob   # follow logs (watch the API + Slack bot start up)
-docker compose ps            # show status / health
-docker compose down          # stop and remove the container
-docker compose restart bob   # restart after changing .env
-docker compose up --build    # rebuild after editing code or .bob/ config
+podman compose logs -f bob   # follow logs (watch the API + Slack bot start up)
+podman compose ps            # show status / health
+podman compose down          # stop and remove the container
+podman compose restart bob   # restart after changing .env
+podman compose up --build    # rebuild after editing code or .bob/ config
 ```
 
 > **API only (no Slack)?** Override the command to skip the bot:
-> `docker compose run --rm --service-ports bob serve`
+> `podman compose run --rm --service-ports bob serve`
 > (or change `command: ["serve-all"]` to `["serve"]` in `docker-compose.yml`).
 
-> Using Podman instead of Docker? Replace `docker` with `podman` in every
-> command above — see the note under §2.
+> Prefer Docker? Replace `podman` with `docker` in every command above — the
+> compose file and image build are identical. See the note under §2.
 
 ---
 
@@ -145,17 +146,17 @@ The key already lives in `.env` in this repo; replace it with your own if needed
 ## 2. Build and run
 
 ```bash
-docker compose up --build
+podman compose up --build
 ```
 
 The API is served at `http://localhost:8080`. The Bob Shell version is pinned
-via the `BOB_VERSION` build arg (default `1.0.5`) for reproducible builds — bump
+via the `BOB_VERSION` build arg (default `2.0.1`) for reproducible builds — bump
 it in `docker-compose.yml` to upgrade.
 
-> **Note:** this machine has no Docker daemon, only Podman. Every command below
-> works with `podman` too — use `podman compose ...` and `podman run ...` in
-> place of `docker`. (Podman ignores the image `HEALTHCHECK`, so a compose-level
-> healthcheck is defined as well.)
+> **Note:** this machine has no Docker daemon, only Podman — so every command
+> here uses `podman compose ...` / `podman run ...`. Docker works too: just swap
+> `podman` for `docker`. (Podman ignores the image `HEALTHCHECK`, so a
+> compose-level healthcheck is defined as well.)
 
 ---
 
@@ -190,7 +191,7 @@ confirmation.
 |---|---|---|---|
 | `prompt` | string | (required) | The task for Bob |
 | `yolo` | bool | `true` | Auto-approve all tool calls |
-| `mode` | string | `unrestricted-dev` | Custom mode slug (`--chat-mode`) |
+| `mode` | string | `unrestricted-dev` | Custom mode slug (`--mode`) |
 | `workdir` | string | `/` | Working directory for the run (`/` = whole container) |
 | `timeout` | int | `600` | Max seconds before abort (1–3600) |
 
@@ -210,7 +211,7 @@ curl -s http://localhost:8080/invoke \
   "exit_code": 0,
   "output": "...Hello from Bob...",
   "error": "",
-  "command": ["bob", "--accept-license", "-p", "...", "--chat-mode=unrestricted-dev", "--yolo"]
+  "command": ["bob", "run", "--accept-license", "--mode", "unrestricted-dev", "..."]
 }
 ```
 
@@ -258,6 +259,9 @@ JID=$(curl -s http://localhost:8080/jobs \
 # Poll status + output so far
 curl http://localhost:8080/jobs/$JID
 
+# Cancel it; status progresses through cancelling → cancelled
+curl -X DELETE http://localhost:8080/jobs/$JID
+
 # List all jobs/runs
 curl http://localhost:8080/jobs
 ```
@@ -271,7 +275,7 @@ A job view looks like:
   "status": "completed",
   "exit_code": 0,
   "output": "...",
-  "command": ["bob", "--accept-license", "-p", "...", "--chat-mode=unrestricted-dev", "--yolo"]
+  "command": ["bob", "run", "--accept-license", "--mode", "unrestricted-dev", "..."]
 }
 ```
 
@@ -358,8 +362,8 @@ FastAPI ships OpenAPI docs out of the box:
 ## 4. Talk to Bob from Slack (bidirectional bot)
 
 The Slack bot lets you talk to Bob **in a Slack channel without @-mentioning
-it**: write a message, Bob runs it through `POST /invoke` and replies in the
-thread.
+it**: write a message, Bob starts a cancellable `/jobs` task and replies in the
+thread when it reaches a terminal state.
 
 It connects to Slack over **Socket Mode** (an outbound WebSocket), so the
 container needs **no public URL**. By default the compose command is
@@ -368,12 +372,18 @@ container** — the bot calls the API over `http://localhost:8080`. (You can sti
 run them apart: override the command to `serve` for API-only, or `slack` for a
 bot-only container that points at a remote API via `HARNESS_URL`.)
 
+> **New to Slack apps?** Follow the beginner-friendly, click-by-click walkthrough
+> in **[`SLACK_SETUP.md`](SLACK_SETUP.md)** — it covers creating the app from the
+> manifest, both tokens, every `.env` value, inviting the bot, verifying the
+> connection, and troubleshooting, with all the URLs you need. The steps below are
+> the condensed version.
+
 ### 4.1 Create the Slack App
 
 1. Go to **[api.slack.com/apps](https://api.slack.com/apps)** → **Create New App**
    → **From a manifest**, pick your workspace, and paste `slack/manifest.yaml`
    from this repo. It pre-configures the scopes (`chat:write`,
-   `channels:history`), the `message.channels` event, and Socket Mode.
+   `channels:history`, `files:read`), the `message.channels` event, and Socket Mode.
 2. **Install** the app to the workspace, then copy the **Bot User OAuth Token**
    (`xoxb-...`) → `SLACK_BOT_TOKEN`.
 3. Under **Basic Information → App-Level Tokens**, generate a token with the
@@ -385,8 +395,8 @@ bot-only container that points at a remote API via `HARNESS_URL`.)
 Paste the two tokens into `.env` (see `.env.example`), then:
 
 ```bash
-docker compose up --build   # single container: REST API + Slack bot (serve-all)
-docker compose logs -f bob  # watch the bot connect and handle messages
+podman compose up --build   # single container: REST API + Slack bot (serve-all)
+podman compose logs -f bob  # watch the bot connect and handle messages
 ```
 
 Now any message in a channel the bot is in (no mention needed) gets a reply
@@ -397,12 +407,21 @@ from Bob in-thread. To limit the bot to specific channels, set
 
 - The bot ignores messages from bots (including its own) — this is what prevents
   a reply loop — and skips message edits/joins (`subtype`) and empty messages.
-- It calls `/invoke` (synchronous prompt → reply); the verify/retry `/run` loop
-  is not used for chat.
+- It starts an asynchronous `/jobs` task and polls it; the verify/retry `/run`
+  loop is not used for chat.
+- To stop the current task, reply in the same thread with `cancel`, `cancelar`,
+  `stop`, or `detener`. Bob kills the complete process group and reports the
+  final `cancelled` state.
 - The bot pulls prior thread messages back as context, so Bob answers with
   continuity within a thread.
-- Very long transcripts are truncated in the reply; re-run in a terminal for the
-  full log.
+- Images and documents are downloaded under `/workspace/slack_uploads/`, and
+  Bob receives their local paths. Files are limited to 25 MiB each by default.
+- Attachments remain available to follow-up messages in the same thread. A
+  background cleanup retains them for 7 days and enforces a 512 MiB total quota.
+- Slack retries are deduplicated for 1 hour, and at most two Slack-triggered Bob
+  requests run concurrently. Additional requests receive a short busy response.
+- Long answers continue as multiple readable messages in the same thread; the
+  bot does not discard the tail of Bob's response.
 - **Security:** the bot runs Bob in `unrestricted-dev` + YOLO. Anyone who can
   post in a channel the bot is in can run commands inside the container — only
   add it to trusted channels (and use `SLACK_ALLOWED_CHANNELS`).
@@ -414,12 +433,19 @@ from Bob in-thread. To limit the bot to specific channels, set
 | `HARNESS_URL` | `http://localhost:8080` | REST API base URL (same container under `serve-all`; override for a remote API) |
 | `SLACK_ALLOWED_CHANNELS` | — | Optional CSV of channel IDs to restrict to |
 | `BOB_INVOKE_TIMEOUT` | `600` | Max seconds per Bob invocation |
+| `SLACK_UPLOAD_DIR` | `/workspace/slack_uploads` | Persistent directory for Slack attachments |
+| `SLACK_MAX_FILE_BYTES` | `26214400` | Maximum bytes downloaded per attachment |
+| `SLACK_UPLOAD_TTL_SECONDS` | `604800` | Attachment retention; `0` disables expiry |
+| `SLACK_UPLOAD_MAX_BYTES` | `536870912` | Total attachment quota; `0` disables it |
+| `SLACK_UPLOAD_CLEANUP_SECONDS` | `3600` | Cleanup interval; `0` disables periodic cleanup |
+| `SLACK_EVENT_TTL_SECONDS` | `3600` | Duplicate-event retention window |
+| `SLACK_MAX_CONCURRENT` | `2` | Maximum simultaneous Slack-triggered runs |
 
 ---
 
 ## 5. Schedule recurring tasks (cron)
 
-Bob is **stateless** — each `bob -p` is a one-shot process — so recurring work
+Bob is **stateless** — each `bob run` is a one-shot process — so recurring work
 needs a scheduler that *fires* Bob on a clock. That scheduler is the container's
 own **cron daemon**, managed through the harness API (no hand-editing crontabs).
 
@@ -511,10 +537,10 @@ to register schedules through this API:
 
 ```bash
 # Interactive session
-docker compose run --rm bob shell
+podman compose run --rm bob shell
 
 # Single headless prompt
-docker compose run --rm bob bob -p "Explain @README.md" --yolo --chat-mode=unrestricted-dev
+podman compose run --rm bob bob run --accept-license --mode unrestricted-dev "Explain @README.md"
 ```
 
 ## 7. Tests
@@ -551,11 +577,18 @@ pytest -v
 | `BOB_WORKDIR` | `/` | `.env` / compose | Default working directory (`/` = whole container) |
 | `BOB_MAX_JOBS` | `100` | env | Max runs kept in memory (oldest evicted) |
 | `BOB_BIN` | `bob` | env | Path/name of the Bob binary |
-| `BOB_VERSION` | `1.0.5` | build arg | Pinned Bob Shell version |
+| `BOB_VERSION` | `2.0.1` | build arg | Pinned Bob Shell version |
 | `SLACK_BOT_TOKEN` | — | `.env` | Slack bot token (`xoxb-...`); required for the Slack bot |
 | `SLACK_APP_TOKEN` | — | `.env` | Slack app-level token (`xapp-...`) for Socket Mode |
 | `SLACK_ALLOWED_CHANNELS` | — | `.env` | Optional CSV of channel IDs the bot answers in |
 | `SLACK_DEFAULT_CHANNEL` | — | `.env` | Fallback channel id where scheduled runs post their result |
+| `SLACK_UPLOAD_DIR` | `/workspace/slack_uploads` | env | Where incoming Slack attachments are saved |
+| `SLACK_MAX_FILE_BYTES` | `26214400` | env | Maximum bytes downloaded per Slack attachment |
+| `SLACK_UPLOAD_TTL_SECONDS` | `604800` | env | Seconds to retain Slack attachments (`0` disables expiry) |
+| `SLACK_UPLOAD_MAX_BYTES` | `536870912` | env | Total attachment storage quota (`0` disables it) |
+| `SLACK_UPLOAD_CLEANUP_SECONDS` | `3600` | env | Background cleanup interval (`0` disables it) |
+| `SLACK_EVENT_TTL_SECONDS` | `3600` | env | Window for suppressing duplicate Slack events |
+| `SLACK_MAX_CONCURRENT` | `2` | env | Concurrent Slack-triggered Bob runs |
 | `HARNESS_URL` | `http://localhost:8080` | compose | REST API URL the Slack bot + cron call (same container under `serve-all`) |
 | `BOB_SCHEDULES_FILE` | `/workspace/schedules.json` | env | Persisted schedule registry (survives restarts) |
 | `BOB_CRON_LOG` | `/workspace/cron.log` | env | Where each cron tick logs its curl output |

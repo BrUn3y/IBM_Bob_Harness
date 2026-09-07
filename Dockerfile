@@ -48,7 +48,7 @@ RUN npm install -g --loglevel=error \
 # dir is managed by Bob itself, not by us.
 COPY .bob/ /.bob/
 
-# REST API wrapper around `bob -p`.
+# REST API wrapper around `bob run`.
 WORKDIR /app
 COPY api/requirements.txt /app/requirements.txt
 RUN pip3 install --no-cache-dir --break-system-packages -r /app/requirements.txt

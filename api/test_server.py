@@ -220,6 +220,44 @@ def test_get_unknown_job_returns_404(client):
     assert client.get("/jobs/deadbeef").status_code == 404
 
 
+def test_cancel_unknown_job_returns_404(client):
+    assert client.delete("/jobs/deadbeef").status_code == 404
+
+
+def test_cancel_job_kills_process_group_and_reaches_cancelled(client):
+    with patch.object(server.os, "makedirs"), patch.object(
+        server, "_bob_cmd", return_value=["bash", "-c", "sleep 30 & wait"]
+    ):
+        jid = client.post("/jobs", json={"prompt": "x"}).json()["id"]
+        for _ in range(100):
+            if server._runs[jid].status == "running":
+                break
+            time.sleep(0.01)
+        response = client.delete(f"/jobs/{jid}")
+        assert response.status_code == 200
+        assert response.json()["cancel_requested"] is True
+        _wait_done(jid)
+        view = client.get(f"/jobs/{jid}").json()
+
+    assert view["status"] == "cancelled"
+    assert "cancelled by user" in view["output"]
+
+
+def test_cancel_completed_job_is_idempotent(client):
+    fake = FakePopen(["done\n"], returncode=0)
+    with patch.object(server.os, "makedirs"), patch.object(
+        server.subprocess, "Popen", return_value=fake
+    ):
+        jid = client.post("/jobs", json={"prompt": "x"}).json()["id"]
+        _wait_done(jid)
+        response = client.delete(f"/jobs/{jid}")
+    assert response.json() == {
+        "id": jid,
+        "status": "completed",
+        "cancel_requested": False,
+    }
+
+
 # --------------------------------------------------------------------------- #
 # Timeout watchdog kills the whole process tree (no hung jobs)
 # --------------------------------------------------------------------------- #

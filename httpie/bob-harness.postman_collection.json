@@ -1,0 +1,349 @@
+{
+  "info": {
+    "name": "IBM Bob Shell REST Harness",
+    "description": "All endpoints of the Bob Harness API (v1.3.0).\n\nBase URL is the {{baseUrl}} variable (default http://localhost:8080).\nNo auth header is required (BOBSHELL_API_KEY is used by Bob internally).\nFor path params, set the run_id / schedule_id collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "run_id",
+      "value": ""
+    },
+    {
+      "key": "schedule_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Core",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Liveness probe. Reports bob_present, default_mode, api_key_set."
+          },
+          "response": []
+        },
+        {
+          "name": "Invoke (sync)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/invoke",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "invoke"
+              ]
+            },
+            "description": "Run Bob and wait for the full result (blocking).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Responde únicamente con la palabra OK. No ejecutes comandos ni edites archivos.\",\n  \"yolo\": true,\n  \"timeout\": 120\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Stream (sync SSE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/stream",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stream"
+              ]
+            },
+            "description": "Same as /invoke but streams Bob's output as Server-Sent Events.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Cuenta del 1 al 5, uno por línea.\",\n  \"timeout\": 120\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Async jobs",
+      "item": [
+        {
+          "name": "Create job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs"
+              ]
+            },
+            "description": "Fire-and-forget run. Returns {id,status} (202). Poll with 'Get job'.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Crea un archivo /workspace/hola.txt con el texto 'hola bob'.\",\n  \"yolo\": true,\n  \"timeout\": 300\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Run (verify/retry loop)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/run",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "run"
+              ]
+            },
+            "description": "Run + verify with a shell 'check' (exit 0 = pass), retry up to max_attempts.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Crea /workspace/status.txt con la palabra READY.\",\n  \"check\": \"test -f /workspace/status.txt && grep -q READY /workspace/status.txt\",\n  \"max_attempts\": 3,\n  \"timeout\": 300,\n  \"check_timeout\": 60\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List jobs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs"
+              ]
+            },
+            "description": "List all known jobs and their status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get job",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{run_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{run_id}}"
+              ]
+            },
+            "description": "Status/result of one job. Set the run_id collection variable first."
+          },
+          "response": []
+        },
+        {
+          "name": "Stream job (SSE)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/{{run_id}}/stream",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "jobs",
+                "{{run_id}}",
+                "stream"
+              ]
+            },
+            "description": "Live SSE stream of a running job. Set run_id first."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Schedules (cron)",
+      "item": [
+        {
+          "name": "Create schedule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/schedules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schedules"
+              ]
+            },
+            "description": "Register a cron job. cron = 5-field 'm h dom mon dow'. (201)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cron\": \"0 9 * * 1-5\",\n  \"prompt\": \"Publica un resumen breve del estado del sistema.\",\n  \"name\": \"weekday-morning-summary\",\n  \"channel\": \"\",\n  \"max_attempts\": 3,\n  \"timeout\": 600\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List schedules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/schedules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schedules"
+              ]
+            },
+            "description": "List all registered schedules."
+          },
+          "response": []
+        },
+        {
+          "name": "Get schedule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/schedules/{{schedule_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schedules",
+                "{{schedule_id}}"
+              ]
+            },
+            "description": "One schedule by id. Set the schedule_id collection variable first."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete schedule",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/schedules/{{schedule_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schedules",
+                "{{schedule_id}}"
+              ]
+            },
+            "description": "Remove a schedule. Set schedule_id first."
+          },
+          "response": []
+        },
+        {
+          "name": "Run schedule now",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/schedules/{{schedule_id}}/run",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "schedules",
+                "{{schedule_id}}",
+                "run"
+              ]
+            },
+            "description": "Trigger a scheduled job immediately (202). Set schedule_id first."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

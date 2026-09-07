@@ -28,6 +28,8 @@ oauth_config:
       # Read messages in public channels the bot is a member of (so it can
       # respond without being mentioned).
       - channels:history
+      # Download images and documents attached to messages.
+      - files:read
 
 settings:
   event_subscriptions:

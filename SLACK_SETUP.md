@@ -73,6 +73,7 @@ slack/manifest.yaml
        bot:
          - chat:write         # post replies
          - channels:history   # read messages in channels the bot is in
+         - files:read         # download attached images and documents
 
    settings:
      event_subscriptions:
@@ -85,9 +86,14 @@ slack/manifest.yaml
 
 6. Click **"Next"**, then **"Create"**.
 
+> Updating an existing app? Add `files:read` under **OAuth & Permissions → Bot
+> Token Scopes**, then click **Reinstall to Workspace** so the current bot token
+> receives the new permission.
+
 > **What did the manifest just configure?**
 > - A bot named **Bob**.
-> - Permissions (*scopes*): `chat:write` (reply) and `channels:history` (read).
+> - Permissions (*scopes*): `chat:write` (reply), `channels:history` (read), and
+>   `files:read` (download user attachments).
 > - The `message.channels` event (Bob "listens" for new messages).
 > - **Socket Mode enabled** (that's why no public URL is required).
 
@@ -169,6 +175,13 @@ Advanced variables (leave them as-is unless you know what you're doing):
 | `SLACK_WORKDIR` | `/` | Working directory Bob runs with when triggered from Slack |
 | `BOB_INVOKE_TIMEOUT` | `600` | Maximum seconds per Bob run |
 | `HARNESS_URL` | `http://localhost:8080` | Which API the bot talks to (only change it if you run the bot in a separate container) |
+| `SLACK_UPLOAD_DIR` | `/workspace/slack_uploads` | Where incoming images and documents are saved |
+| `SLACK_MAX_FILE_BYTES` | `26214400` | Maximum bytes downloaded per attachment (25 MiB) |
+| `SLACK_UPLOAD_TTL_SECONDS` | `604800` | How long attachments remain available (7 days; `0` disables expiry) |
+| `SLACK_UPLOAD_MAX_BYTES` | `536870912` | Total attachment quota (512 MiB; `0` disables it) |
+| `SLACK_UPLOAD_CLEANUP_SECONDS` | `3600` | Cleanup frequency (1 hour; `0` disables periodic cleanup) |
+| `SLACK_EVENT_TTL_SECONDS` | `3600` | How long duplicate Slack event IDs are remembered |
+| `SLACK_MAX_CONCURRENT` | `2` | Maximum Bob requests processed from Slack simultaneously |
 
 **Example of a minimal working `.env`:**
 
@@ -238,6 +251,19 @@ Bob, reply with the single word OK
 You should see the **"Bob is thinking…"** placeholder (it rotates the text) and,
 after a few seconds, Bob's reply **in the thread**. 🎉
 
+Then attach an image or document with a request such as `Describe this image` or
+`Summarize this PDF`. File-only messages are accepted too.
+
+Attachments stay associated with their Slack thread, so follow-up requests such
+as `compare it with the previous image` can reuse retained files. The bot cleans
+expired files hourly, removes the oldest files when the quota is exceeded, and
+suppresses Slack retry events so the same prompt is not executed twice.
+
+To stop a long-running request, reply inside its thread with `cancel`,
+`cancelar`, `stop`, or `detener`. The bot terminates Bob and its child processes,
+acknowledges the request, and replaces the pending response with the final
+`cancelled` status.
+
 ---
 
 ## 🛠️ Troubleshooting (FAQ)
@@ -250,6 +276,9 @@ after a few seconds, Bob's reply **in the thread**. 🎉
 | The bot **won't connect** (no "session established") | Missing `xapp-`, or it lacks `connections:write` | Regenerate the App-Level Token (Step 3) |
 | Startup error: `SLACK_APP_TOKEN is not set` | A variable is missing in `.env` | Ensure both `SLACK_BOT_TOKEN` **and** `SLACK_APP_TOKEN` are filled |
 | Log: `not_in_channel` when replying | The bot isn't a member of the channel | `/invite @Bob` |
+| Bob cannot download an attachment | The app lacks `files:read` | Add the scope under **OAuth & Permissions**, then reinstall the app |
+| Bob says it is busy | The configured concurrency limit is active | Wait for a running request to finish or raise `SLACK_MAX_CONCURRENT` |
+| Bob says there is no active job | The cancel command was posted outside the task's thread, or the task already ended | Post `cancel` as a reply inside the running task's thread |
 | You swapped the tokens | `xoxb-` in `SLACK_APP_TOKEN` (or vice versa) | `xoxb-`→`SLACK_BOT_TOKEN`, `xapp-`→`SLACK_APP_TOKEN` |
 | You changed `.env` but nothing changed | The container is still running the old values | `podman compose restart bob` (or `up --build`) |
 

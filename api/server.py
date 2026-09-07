@@ -1,7 +1,7 @@
 """Thin REST harness in front of Bob Shell.
 
 Bob Shell has no native server mode, so this drives its non-interactive
-`bob -p "<prompt>"` invocation. Requests shell out to `bob`, which
+`bob run --mode <mode> "<prompt>"` invocation. Requests shell out to `bob`, which
 authenticates with the BOBSHELL_API_KEY present in the container env.
 
 Two levels of use:
@@ -18,6 +18,7 @@ Endpoints:
   POST /run                 -> start an orchestrated run (verify + retry) -> {id}
   GET  /jobs                -> list runs/jobs
   GET  /jobs/{id}           -> status + output (+ attempts for /run)
+  DELETE /jobs/{id}         -> cancel a running job/run
   GET  /jobs/{id}/stream    -> Server-Sent Events, streaming output live
   POST /stream              -> start a job AND stream it in one request (SSE)
   POST /schedules           -> register a recurring run (cron) -> schedule
@@ -54,7 +55,7 @@ async def _lifespan(app: "FastAPI"):
     yield
 
 
-app = FastAPI(title="IBM Bob Shell REST Harness", version="1.3.0", lifespan=_lifespan)
+app = FastAPI(title="IBM Bob Shell REST Harness", version="1.4.0", lifespan=_lifespan)
 
 # Defaults come from the container env (see Dockerfile / .env).
 DEFAULT_MODE = os.environ.get("BOB_MODE", "unrestricted-dev")
@@ -71,7 +72,7 @@ DEFAULT_SLACK_CHANNEL = os.environ.get("SLACK_DEFAULT_CHANNEL")
 class InvokeRequest(BaseModel):
     prompt: str = Field(..., description="The task / prompt for Bob.")
     yolo: bool = Field(True, description="Auto-approve all tool calls.")
-    mode: Optional[str] = Field(None, description="Custom mode slug (--chat-mode).")
+    mode: Optional[str] = Field(None, description="Custom mode slug (--mode).")
     workdir: Optional[str] = Field(None, description="Working directory for the run.")
     timeout: int = Field(600, ge=1, le=3600, description="Max seconds per Bob attempt.")
 
@@ -103,7 +104,7 @@ class ScheduleRequest(BaseModel):
     cron: str = Field(..., description="5-field cron expression: m h dom mon dow.")
     prompt: str = Field(..., description="The task Bob runs each time it fires.")
     name: Optional[str] = Field(None, description="Human-readable label.")
-    mode: Optional[str] = Field(None, description="Custom mode slug (--chat-mode).")
+    mode: Optional[str] = Field(None, description="Custom mode slug (--mode).")
     check: Optional[str] = Field(None, description="Verify command (exit 0 = pass).")
     workdir: Optional[str] = Field(None, description="Working directory for the run.")
     channel: Optional[str] = Field(
@@ -142,9 +143,12 @@ class BaseRun:
         self.id = uuid.uuid4().hex[:12]
         self.cwd = cwd
         self.timeout = timeout
-        self.status = "pending"  # pending|running|completed|failed|timeout
+        self.status = "pending"  # pending|running|cancelling|cancelled|completed|failed|timeout
         self._lines: list[str] = []
         self._lock = threading.Lock()
+        self._process_lock = threading.Lock()
+        self._process: Optional[subprocess.Popen] = None
+        self.cancel_requested = threading.Event()
         self.done = threading.Event()
 
     @property
@@ -160,8 +164,40 @@ class BaseRun:
         with self._lock:
             self._lines.append(line)
 
+    def _set_process(self, process: Optional[subprocess.Popen]) -> None:
+        with self._process_lock:
+            self._process = process
+
+    def cancel(self) -> bool:
+        """Request cancellation and kill the currently active process group."""
+        if self.done.is_set():
+            return False
+        self.cancel_requested.set()
+        self.status = "cancelling"
+        with self._process_lock:
+            process = self._process
+        if process is not None:
+            _kill_process_group(process)
+        return True
+
+    def _finish_cancelled(self) -> None:
+        self._append("\n[harness] cancelled by user\n")
+        self.status = "cancelled"
+        self.done.set()
+
     def view(self) -> dict:  # pragma: no cover - overridden
         raise NotImplementedError
+
+
+def _kill_process_group(proc: subprocess.Popen) -> None:
+    """SIGKILL a subprocess session, falling back to the direct child."""
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+    except (ProcessLookupError, PermissionError, AttributeError):
+        try:
+            proc.kill()
+        except ProcessLookupError:
+            pass
 
 
 def _stream_exec(sink: BaseRun, cmd: list[str], cwd: str, timeout: int) -> tuple[str, Optional[int], bool]:
@@ -177,6 +213,8 @@ def _stream_exec(sink: BaseRun, cmd: list[str], cwd: str, timeout: int) -> tuple
     never see EOF, and the run would hang forever in "running" instead of
     reaching a terminal "timeout" state.
     """
+    if sink.cancel_requested.is_set():
+        return "", None, False
     try:
         proc = subprocess.Popen(
             cmd,
@@ -192,20 +230,15 @@ def _stream_exec(sink: BaseRun, cmd: list[str], cwd: str, timeout: int) -> tuple
         msg = f"'{cmd[0]}' not found on PATH\n"
         sink._append(msg)
         return msg, 127, False
+    sink._set_process(proc)
+    if sink.cancel_requested.is_set():
+        _kill_process_group(proc)
 
     killed = {"v": False}
 
     def _kill() -> None:
         killed["v"] = True
-        try:
-            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-        except (ProcessLookupError, PermissionError):
-            # Group already gone, or we can't signal it: at least kill the
-            # direct child so we don't leave the watchdog a no-op.
-            try:
-                proc.kill()
-            except ProcessLookupError:
-                pass
+        _kill_process_group(proc)
 
     timer = threading.Timer(timeout, _kill)
     timer.start()
@@ -218,6 +251,7 @@ def _stream_exec(sink: BaseRun, cmd: list[str], cwd: str, timeout: int) -> tuple
         proc.wait()
     finally:
         timer.cancel()
+        sink._set_process(None)
 
     if killed["v"]:
         return "".join(buf), None, True
@@ -235,6 +269,9 @@ class Job(BaseRun):
     def run(self) -> None:
         self.status = "running"
         _out, rc, timed_out = _stream_exec(self, self.cmd, self.cwd, self.timeout)
+        if self.cancel_requested.is_set():
+            self._finish_cancelled()
+            return
         if timed_out:
             self._append(f"\n[harness] timed out after {self.timeout}s\n")
             self.status = "timeout"
@@ -291,6 +328,11 @@ class HarnessRun(BaseRun):
                 self, _bob_cmd(prompt, self.mode, self.yolo), self.cwd, self.timeout
             )
             record: dict = {"attempt": attempt, "bob_exit_code": bob_rc}
+            if self.cancel_requested.is_set():
+                self.attempts.append(record)
+                self.success = False
+                self._finish_cancelled()
+                return
             if timed_out:
                 record["timed_out"] = True
                 self.attempts.append(record)
@@ -312,6 +354,12 @@ class HarnessRun(BaseRun):
             chk_out, chk_rc, chk_timeout = _stream_exec(
                 self, ["bash", "-lc", self.check], self.cwd, self.check_timeout
             )
+            if self.cancel_requested.is_set():
+                record["check_exit_code"] = None
+                self.attempts.append(record)
+                self.success = False
+                self._finish_cancelled()
+                return
             record["check_exit_code"] = None if chk_timeout else chk_rc
             record["check_timed_out"] = chk_timeout
             self.attempts.append(record)
@@ -451,6 +499,13 @@ def get_run(run_id: str) -> dict:
     return _get(run_id).view()
 
 
+@app.delete("/jobs/{run_id}")
+def cancel_run(run_id: str) -> dict:
+    run = _get(run_id)
+    requested = run.cancel()
+    return {"id": run.id, "status": run.status, "cancel_requested": requested}
+
+
 @app.get("/jobs/{run_id}/stream")
 def stream_run(run_id: str) -> StreamingResponse:
     return StreamingResponse(_sse(_get(run_id)), media_type="text/event-stream")
@@ -553,9 +608,11 @@ def _deliver_to_slack(sched: dict, run: "HarnessRun", channel: str) -> None:
     answer = slack_bot.clean_output(run.output) or "(no output)"
     if run.status != "completed":
         answer = f":warning: scheduled run `{label}` ended with status *{run.status}*\n\n{answer}"
-    ok, err = slack_bot.post_message(channel, slack_bot.build_reply(answer))
-    if not ok:
-        print(f"[scheduler] failed to post schedule {sched['id']} to {channel}: {err}")
+    for reply in slack_bot.build_replies(answer):
+        ok, err = slack_bot.post_message(channel, reply)
+        if not ok:
+            print(f"[scheduler] failed to post schedule {sched['id']} to {channel}: {err}")
+            break
 
 
 def _bob_available() -> bool:
