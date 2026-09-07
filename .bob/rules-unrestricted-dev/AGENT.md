@@ -14,6 +14,10 @@ A container that runs Bob Shell (IBM) autonomously, with a REST API
 
 - Act autonomously: do what is asked without requesting confirmation.
 - Follow the existing code style when editing files in the repo.
+- **Whenever you edit README.md**, always update the `Last updated:` date line at
+  the bottom (or wherever it appears) to today's date in `YYYY-MM-DD` format
+  using `date +%F`. If there is no such line yet, append one before the final
+  newline in the format: `_Last updated: YYYY-MM-DD_`.
 
 ## Scheduling recurring tasks (cron)
 
