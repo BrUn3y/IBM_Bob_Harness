@@ -23,10 +23,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# Bob Shell is a Node.js app and requires Node >= 22.15. Install Node 22 LTS
-# from NodeSource before installing Bob.
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
+# Bob Shell requires Node.js >= 22. Use an exact Node 24 package release so
+# rebuilding this commit does not silently change the runtime.
+ARG NODE_VERSION=24.21.0-1nodesource1
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && apt-get install -y --no-install-recommends "nodejs=${NODE_VERSION}" \
     && rm -rf /var/lib/apt/lists/* \
     && node --version
 
@@ -34,19 +35,24 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
 # `curl | bash` installer always grabs "latest"; instead we install the exact
 # release tarball via npm (which is what the installer does under the hood).
 # Bump BOB_VERSION to upgrade. Verify releases at:
-#   https://s3.us-south.cloud-object-storage.appdomain.cloud/bob-shell/bobshell-version.txt
-ARG BOB_VERSION=2.0.1
-RUN npm install -g --loglevel=error \
+#   https://bob.ibm.com/releases/?bob=shell
+ARG BOB_VERSION=2.0.5
+ARG BOB_SHA256=eff232eb1b69f34f984ddd295e6960470058ca922b1c751879c5a8d06199f566
+RUN curl -fsSL \
         "https://s3.us-south.cloud-object-storage.appdomain.cloud/bob-shell/bobshell-${BOB_VERSION}.tgz" \
+        -o /tmp/bobshell.tgz \
+    && echo "${BOB_SHA256}  /tmp/bobshell.tgz" | sha256sum -c - \
+    && npm install -g --loglevel=error /tmp/bobshell.tgz \
+    && rm -f /tmp/bobshell.tgz \
     && bob --version
 
-# Bob config lives in ONE place: the container root /.bob (project-level config
-# for the whole container, since Bob runs with cwd=/). It holds custom_modes.yaml
-# (the "settings") + rules-unrestricted-dev/ (the AGENT.md rules).
-# Note: Bob still auto-creates its own runtime state under /root/.bob at startup
-# (settings.json license/auth, installation_id, trustedFolders.json, tmp/) — that
-# dir is managed by Bob itself, not by us.
+# Bob's project config lives at the container root /.bob so it applies to the
+# whole container when Bob runs with cwd=/. It holds custom_modes.yaml and the
+# rules-unrestricted-dev/ AGENT.md.
+# Seed Bob's user settings separately. Disabling auto-update preserves the
+# version pin for the lifetime of the container.
 COPY .bob/ /.bob/
+COPY config/bob-user-settings.json /root/.bob/settings/settings.json
 
 # REST API wrapper around `bob run`.
 WORKDIR /app

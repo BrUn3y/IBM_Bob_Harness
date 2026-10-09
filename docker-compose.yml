@@ -7,8 +7,10 @@ services:
     build:
       context: .
       args:
-        # Pin the Bob Shell version for reproducible builds.
-        BOB_VERSION: "2.0.1"
+        # Pin the runtimes and verify the Bob Shell release artifact.
+        NODE_VERSION: "24.21.0-1nodesource1"
+        BOB_VERSION: "2.0.5"
+        BOB_SHA256: "eff232eb1b69f34f984ddd295e6960470058ca922b1c751879c5a8d06199f566"
     image: bob-harness
     container_name: bob-harness
     command: ["serve-all"]
