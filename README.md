@@ -17,7 +17,7 @@ A container that runs **Bob Shell** (IBM) autonomously, with a
 
 | File | Role |
 |---|---|
-| `Dockerfile` | Ubuntu 24.04 + Node 22 + pinned Bob Shell + REST wrapper + `HEALTHCHECK` |
+| `Dockerfile` | Ubuntu 24.04 + Node 24 + pinned Bob Shell + REST wrapper + `HEALTHCHECK` |
 | `docker-compose.yml` | Orchestration: single container (`serve-all` = API + Slack bot), port 8080, `workspace/` volume, `.env`, healthcheck |
 | `entrypoint.sh` | Validates the env, accepts the license, starts the API / bot / CLI |
 | `.bob/custom_modes.yaml` | `unrestricted-dev` mode: full access (read/edit/command/browser/mcp) |
@@ -150,7 +150,7 @@ podman compose up --build
 ```
 
 The API is served at `http://localhost:8080`. The Bob Shell version is pinned
-via the `BOB_VERSION` build arg (default `2.0.1`) for reproducible builds — bump
+via the `BOB_VERSION` build arg (default `2.0.5`) for reproducible builds — bump
 it in `docker-compose.yml` to upgrade.
 
 > **Note:** this machine has no Docker daemon, only Podman — so every command
@@ -577,7 +577,7 @@ pytest -v
 | `BOB_WORKDIR` | `/` | `.env` / compose | Default working directory (`/` = whole container) |
 | `BOB_MAX_JOBS` | `100` | env | Max runs kept in memory (oldest evicted) |
 | `BOB_BIN` | `bob` | env | Path/name of the Bob binary |
-| `BOB_VERSION` | `2.0.1` | build arg | Pinned Bob Shell version |
+| `BOB_VERSION` | `2.0.5` | build arg | Pinned Bob Shell version |
 | `SLACK_BOT_TOKEN` | — | `.env` | Slack bot token (`xoxb-...`); required for the Slack bot |
 | `SLACK_APP_TOKEN` | — | `.env` | Slack app-level token (`xapp-...`) for Socket Mode |
 | `SLACK_ALLOWED_CHANNELS` | — | `.env` | Optional CSV of channel IDs the bot answers in |
