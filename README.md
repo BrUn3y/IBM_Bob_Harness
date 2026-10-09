@@ -17,7 +17,7 @@ A container that runs **Bob Shell** (IBM) autonomously, with a
 
 | File | Role |
 |---|---|
-| `Dockerfile` | Ubuntu 24.04 + Node 24 + pinned Bob Shell + REST wrapper + `HEALTHCHECK` |
+| `Dockerfile` | Ubuntu 24.04 + pinned Node 24 and Bob Shell + REST wrapper + `HEALTHCHECK` |
 | `docker-compose.yml` | Orchestration: single container (`serve-all` = API + Slack bot), port 8080, `workspace/` volume, `.env`, healthcheck |
 | `entrypoint.sh` | Validates the env, accepts the license, starts the API / bot / CLI |
 | `.bob/custom_modes.yaml` | `unrestricted-dev` mode: full access (read/edit/command/browser/mcp) |
@@ -38,6 +38,8 @@ this repo:
 ```
 .bob/
 ├── custom_modes.yaml              # the unrestricted-dev mode ("settings")
+├── settings/
+│   └── settings.json              # disables Bob Shell runtime auto-updates
 └── rules-unrestricted-dev/
     └── AGENT.md                   # persistent context/rules for that mode
 ```
@@ -46,13 +48,14 @@ The `Dockerfile` copies it verbatim to the **container root**: `/.bob/`. Bob run
 with its working directory set to `/` (see `BOB_WORKDIR` below), so `/.bob/` is
 the **project-level** config for the *whole* container — that's why Bob governs
 the entire filesystem, not just `/workspace`. This has been verified end to end:
-Bob reads `/.bob/rules-unrestricted-dev/AGENT.md` at runtime.
+Bob reads `/.bob/rules-unrestricted-dev/AGENT.md` at runtime. The image also
+copies `settings/settings.json` to Bob's user settings path at
+`/root/.bob/settings/settings.json`; `bobShell.autoUpdate` is disabled there so
+the installed Bob version remains pinned.
 
-> **Not the same as `/root/.bob/`.** At startup Bob auto-creates its own
-> runtime state under `/root/.bob/` (`settings.json` with the license/auth,
-> `installation_id`, `trustedFolders.json`, `tmp/`). That directory is managed
-> by Bob itself and holds **none** of our config — edit `.bob/` in the repo, not
-> `/root/.bob/`. To pick up changes, rebuild the image.
+> **Runtime state:** Bob stores license/auth state, its installation ID, trusted
+> folders, and temporary files under `/root/.bob/`. Do not edit that directory
+> inside a running container; edit `.bob/` in the repo and rebuild the image.
 
 ## Endpoints at a glance
 
@@ -149,9 +152,13 @@ The key already lives in `.env` in this repo; replace it with your own if needed
 podman compose up --build
 ```
 
-The API is served at `http://localhost:8080`. The Bob Shell version is pinned
-via the `BOB_VERSION` build arg (default `2.0.5`) for reproducible builds — bump
-it in `docker-compose.yml` to upgrade.
+The API is served at `http://localhost:8080`. Bob Shell and Node.js are pinned
+with build arguments, and the Bob tarball is verified with SHA-256. Update
+`BOB_VERSION` together with `BOB_SHA256` in `docker-compose.yml` when upgrading.
+Bob Shell 2.0.5 supports Node.js 22 or later; this container uses Node 24.21.0.
+
+> These pins apply only to the container image. Host or systemd installations
+> manage their own Bob Shell and Node.js versions and are not changed here.
 
 > **Note:** this machine has no Docker daemon, only Podman — so every command
 > here uses `podman compose ...` / `podman run ...`. Docker works too: just swap
@@ -577,7 +584,9 @@ pytest -v
 | `BOB_WORKDIR` | `/` | `.env` / compose | Default working directory (`/` = whole container) |
 | `BOB_MAX_JOBS` | `100` | env | Max runs kept in memory (oldest evicted) |
 | `BOB_BIN` | `bob` | env | Path/name of the Bob binary |
+| `NODE_VERSION` | `24.21.0-1nodesource1` | build arg | Pinned NodeSource package version |
 | `BOB_VERSION` | `2.0.5` | build arg | Pinned Bob Shell version |
+| `BOB_SHA256` | `eff232eb1b69f34f984ddd295e6960470058ca922b1c751879c5a8d06199f566` | build arg | SHA-256 for the Bob Shell tarball |
 | `SLACK_BOT_TOKEN` | — | `.env` | Slack bot token (`xoxb-...`); required for the Slack bot |
 | `SLACK_APP_TOKEN` | — | `.env` | Slack app-level token (`xapp-...`) for Socket Mode |
 | `SLACK_ALLOWED_CHANNELS` | — | `.env` | Optional CSV of channel IDs the bot answers in |
@@ -610,4 +619,4 @@ pytest -v
 
 Edgar Bruney
 
-_Last updated: 2026-09-03_
+_Last updated: 2026-10-09_

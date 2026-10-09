@@ -18,8 +18,12 @@ if ! command -v bob >/dev/null 2>&1; then
   exit 1
 fi
 
-# Accept the IBM license once, non-interactively (idempotent).
-bob --accept-license -p "print: ready" >/dev/null 2>&1 || true
+# Accept the IBM license once, non-interactively (idempotent). Keep failures
+# visible while allowing the API to start so /health and diagnostics remain
+# available when authentication or license initialization fails.
+if ! bob run --accept-license "print: ready"; then
+  echo "WARNING: Bob license/authentication preflight failed; subsequent Bob runs may fail." >&2
+fi
 
 # Start the cron daemon that fires scheduled runs. The API regenerates root's
 # crontab from the persisted registry (/workspace/schedules.json) on startup;
