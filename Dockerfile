@@ -52,7 +52,7 @@ RUN curl -fsSL \
 # Seed Bob's user settings separately. Disabling auto-update preserves the
 # version pin for the lifetime of the container.
 COPY .bob/ /.bob/
-COPY .bob/settings/settings.json /root/.bob/settings/settings.json
+COPY config/bob-user-settings.json /root/.bob/settings/settings.json
 
 # REST API wrapper around `bob run`.
 WORKDIR /app
