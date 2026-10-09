@@ -22,6 +22,7 @@ A container that runs **Bob Shell** (IBM) autonomously, with a
 | `entrypoint.sh` | Validates the env, accepts the license, starts the API / bot / CLI |
 | `.bob/custom_modes.yaml` | `unrestricted-dev` mode: full access (read/edit/command/browser/mcp) |
 | `.bob/rules-unrestricted-dev/AGENT.md` | Persistent context/rules for the mode (loaded by Bob at runtime) |
+| `config/bob-user-settings.json` | Global Bob settings seeded into the image; disables runtime auto-updates |
 | `api/server.py` | FastAPI app that shells out to `bob` (invoke / jobs / run / stream) |
 | `api/slack_bot.py` | Bidirectional Slack bot (Socket Mode) that manages cancellable `/jobs` |
 | `api/schedules.py` | Cron scheduler: persisted registry + root crontab generation |
@@ -38,8 +39,6 @@ this repo:
 ```
 .bob/
 ├── custom_modes.yaml              # the unrestricted-dev mode ("settings")
-├── settings/
-│   └── settings.json              # disables Bob Shell runtime auto-updates
 └── rules-unrestricted-dev/
     └── AGENT.md                   # persistent context/rules for that mode
 ```
@@ -48,14 +47,16 @@ The `Dockerfile` copies it verbatim to the **container root**: `/.bob/`. Bob run
 with its working directory set to `/` (see `BOB_WORKDIR` below), so `/.bob/` is
 the **project-level** config for the *whole* container — that's why Bob governs
 the entire filesystem, not just `/workspace`. This has been verified end to end:
-Bob reads `/.bob/rules-unrestricted-dev/AGENT.md` at runtime. The image also
-copies `settings/settings.json` to Bob's user settings path at
+Bob reads `/.bob/rules-unrestricted-dev/AGENT.md` at runtime. Separately, the
+image copies `config/bob-user-settings.json` to Bob's user settings path at
 `/root/.bob/settings/settings.json`; `bobShell.autoUpdate` is disabled there so
-the installed Bob version remains pinned.
+the installed Bob version remains pinned. Keeping that seed outside `.bob/`
+avoids placing an unused `/.bob/settings/settings.json` in the project config.
 
 > **Runtime state:** Bob stores license/auth state, its installation ID, trusted
 > folders, and temporary files under `/root/.bob/`. Do not edit that directory
-> inside a running container; edit `.bob/` in the repo and rebuild the image.
+> inside a running container; edit `.bob/` or `config/bob-user-settings.json`
+> in the repo and rebuild the image.
 
 ## Endpoints at a glance
 

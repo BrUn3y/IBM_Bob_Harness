@@ -21,7 +21,7 @@ fi
 # Accept the IBM license once, non-interactively (idempotent). Keep failures
 # visible while allowing the API to start so /health and diagnostics remain
 # available when authentication or license initialization fails.
-if ! bob run --accept-license "print: ready"; then
+if ! timeout 60s bob run --accept-license --max-turns 1 "print: ready"; then
   echo "WARNING: Bob license/authentication preflight failed; subsequent Bob runs may fail." >&2
 fi
 
