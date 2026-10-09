@@ -23,9 +23,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# Bob Shell is a Node.js app and requires Node >= 22.15. Install Node 22 LTS
+# Bob Shell is a Node.js app and requires Node >= 24. Install Node 24
 # from NodeSource before installing Bob.
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/* \
     && node --version
@@ -34,8 +34,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
 # `curl | bash` installer always grabs "latest"; instead we install the exact
 # release tarball via npm (which is what the installer does under the hood).
 # Bump BOB_VERSION to upgrade. Verify releases at:
-#   https://s3.us-south.cloud-object-storage.appdomain.cloud/bob-shell/bobshell-version.txt
-ARG BOB_VERSION=2.0.1
+#   https://bob.ibm.com/releases/?bob=shell
+ARG BOB_VERSION=2.0.5
 RUN npm install -g --loglevel=error \
         "https://s3.us-south.cloud-object-storage.appdomain.cloud/bob-shell/bobshell-${BOB_VERSION}.tgz" \
     && bob --version
