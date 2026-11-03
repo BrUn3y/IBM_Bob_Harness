@@ -1,0 +1,13 @@
+# Optional service-account key mount. Keep the key outside the image/repository.
+# podman compose -f docker-compose.yml -f docker-compose.drive.yml up --build -d
+services:
+  bob:
+    environment:
+      DRIVE_SERVICE_ACCOUNT_FILE: /run/secrets/drive-service-account.json
+    volumes:
+      - type: bind
+        source: ${DRIVE_CREDENTIALS_FILE:-./secrets/drive-service-account.json}
+        target: /run/secrets/drive-service-account.json
+        read_only: true
+        bind:
+          create_host_path: false

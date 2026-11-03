@@ -1,5 +1,7 @@
 # Secrets — never commit the real key
 .env
+.venv/
+secrets/
 
 # Bob working area
 workspace/

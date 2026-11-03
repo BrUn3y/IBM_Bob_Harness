@@ -1,4 +1,6 @@
 .env
+.venv/
+secrets/
 workspace/
 .git/
 __pycache__/

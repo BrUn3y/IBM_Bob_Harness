@@ -30,6 +30,7 @@ Endpoints:
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import os
 import signal
@@ -40,10 +41,11 @@ from collections import OrderedDict
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+import drive
 import schedules
 
 
@@ -52,10 +54,20 @@ async def _lifespan(app: "FastAPI"):
     # Regenerate root's crontab from the persisted registry when the API boots,
     # so schedules created before a restart are re-armed.
     schedules.sync()
-    yield
+    config = drive.DriveConfig.from_env()
+    service = drive.DriveService(config, _execute_drive_task, notify=_notify_drive_slack) if config else None
+    app.state.drive = service
+    if service:
+        service.start()
+    try:
+        yield
+    finally:
+        if service:
+            await asyncio.to_thread(service.stop)
+        app.state.drive = None
 
 
-app = FastAPI(title="IBM Bob Shell REST Harness", version="1.4.0", lifespan=_lifespan)
+app = FastAPI(title="IBM Bob Shell REST Harness", version="1.5.0", lifespan=_lifespan)
 
 # Defaults come from the container env (see Dockerfile / .env).
 DEFAULT_MODE = os.environ.get("BOB_MODE", "unrestricted-dev")
@@ -520,6 +532,58 @@ def start_and_stream(req: InvokeRequest) -> StreamingResponse:
 
 
 # --------------------------------------------------------------------------- #
+# Google Drive — authenticated notifications and a durable document queue
+# --------------------------------------------------------------------------- #
+def _execute_drive_task(prompt: str, timeout: int) -> BaseRun:
+    _require_key()
+    req = RunRequest(prompt=prompt, timeout=timeout, max_attempts=1)
+    mode, workdir = _resolve(req)
+    return _spawn(HarnessRun(req, mode, workdir))
+
+
+def _drive_service(request: Request, *, admin: bool = False) -> drive.DriveService:
+    service = getattr(request.app.state, "drive", None)
+    if service is None:
+        raise HTTPException(status_code=503, detail="Google Drive integration is disabled")
+    if admin:
+        supplied = request.headers.get("authorization", "").encode("utf-8")
+        expected = ("Bearer " + service.config.admin_token).encode("utf-8")
+        if not hmac.compare_digest(supplied, expected):
+            raise HTTPException(status_code=401, detail="Invalid Drive admin token")
+    return service
+
+
+@app.post("/integrations/drive/webhook", status_code=200)
+def drive_webhook(request: Request) -> Response:
+    service = _drive_service(request)
+    try:
+        service.notify(request.headers)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except drive.DriveError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return Response(status_code=200)
+
+
+@app.get("/integrations/drive/status")
+def drive_status(request: Request) -> dict:
+    return _drive_service(request, admin=True).status()
+
+
+@app.get("/integrations/drive/documents")
+def drive_documents(request: Request) -> dict:
+    return {"documents": _drive_service(request, admin=True).documents()}
+
+
+@app.post("/integrations/drive/documents/{file_id}/retry", status_code=202)
+def drive_retry(file_id: str, request: Request) -> dict:
+    service = _drive_service(request, admin=True)
+    if not service.retry(file_id):
+        raise HTTPException(status_code=409, detail="Document must be failed or needs_review to retry")
+    return {"file_id": file_id, "status": "pending"}
+
+
+# --------------------------------------------------------------------------- #
 # Schedules — recurring runs fired by the container's cron daemon
 # --------------------------------------------------------------------------- #
 @app.post("/schedules", status_code=201)
@@ -598,6 +662,12 @@ def run_schedule(schedule_id: str) -> RunRef:
 
     threading.Thread(target=_record, daemon=True).start()
     return RunRef(id=run.id, status=run.status)
+
+
+def _notify_drive_slack(channel: str, text: str) -> tuple[bool, str]:
+    import slack_bot
+
+    return slack_bot.post_message(channel, text)
 
 
 def _deliver_to_slack(sched: dict, run: "HarnessRun", channel: str) -> None:

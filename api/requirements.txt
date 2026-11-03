@@ -1,6 +1,8 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pydantic==2.10.4
+# Drive read-only API, with service-account/VM Application Default Credentials.
+google-auth[requests]==2.40.3
 # Slack bot (Socket Mode). Pulls in slack_sdk; the builtin Socket Mode client
 # needs no extra deps.
 slack_bolt==1.21.2

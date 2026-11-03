@@ -1,0 +1,19 @@
+# REST Client examples. Set baseUrl/token in your client's local environment.
+@baseUrl = http://localhost:8080
+@token = REPLACE_WITH_DRIVE_ADMIN_TOKEN
+
+### Integration status
+GET {{baseUrl}}/integrations/drive/status
+Authorization: Bearer {{token}}
+
+### Latest 100 document records
+GET {{baseUrl}}/integrations/drive/documents
+Authorization: Bearer {{token}}
+
+### Explicitly retry a failed or interrupted task after inspecting its effects
+POST {{baseUrl}}/integrations/drive/documents/REPLACE_WITH_FILE_ID/retry
+Authorization: Bearer {{token}}
+
+# Google alone sends the webhook requests. They use the generated channel
+# secret and resource ID, not the admin token. Do not fabricate file events:
+# the changes cursor, not the webhook payload, identifies changed documents.

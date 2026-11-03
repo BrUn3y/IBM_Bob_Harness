@@ -11,7 +11,14 @@ A container that runs **Bob Shell** (IBM) autonomously, with a
 
 > Bob Shell has **no** native server mode. This project wraps its headless
 > `bob run --accept-license --mode unrestricted-dev "<prompt>"` invocation and adds a
-> verify/retry loop on top (API version `1.4.0`).
+> verify/retry loop on top (API version `1.5.0`).
+
+## Google Drive / Gemini Live
+
+Optional ingestion from the **Workspace_agent** folder: Google Drive push
+notifications wake a persistent queue, the harness reads Google Docs or text
+files, and Bob executes their tasks. See [DRIVE_SETUP.md](DRIVE_SETUP.md) for
+service-account access, HTTPS webhooks, backup/rollback, and deployment.
 
 ## What's included
 
@@ -610,4 +617,4 @@ pytest -v
 
 Edgar Bruney
 
-_Last updated: 2026-09-03_
+_Last updated: 2026-11-02_
