@@ -6,3 +6,7 @@ workspace/
 __pycache__/
 *.pyc
 README.md
+
+secrets/
+
+.venv/

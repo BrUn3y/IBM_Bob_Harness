@@ -523,6 +523,9 @@ def test_format_thread_keeps_prior_file_share_context():
 
 def test_build_conversation_prompt_without_history_has_guidance_and_message():
     prompt = slack_bot.build_conversation_prompt("", "hola")
+    assert "Instagram workflow" in prompt
+    assert "Never publish during a draft request" in prompt
+    assert "--confirm" in prompt
     assert "Answer guidance" in prompt
     assert prompt.strip().endswith("hola")
 

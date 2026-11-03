@@ -69,3 +69,17 @@ broken. Always format replies using Slack mrkdwn:
 - No Markdown tables (Slack does not render them); use aligned text in a code
   block or a simple bulleted list instead.
 - Keep replies concise and readable in a chat window.
+
+## Memory: personal website auto-update
+
+- Website: https://brun3y.github.io/ . Canonical source is `/home/brun3y/IBM_Bob_Harness/BrUn3y.github.io`
+  (public repo `BrUn3y/BrUn3y.github.io`, branch `main`). Do NOT put website files in the profile
+  repo `BrUn3y/Brun3y` (the old `/home/brun3y/IBM_Bob_Harness/Brun3y` checkout is README/Strava only).
+- Its `AGENTS.md` / `agent.md` define what to update and the rules to follow. Read them first.
+- Pushing to `main` (index.html, site/**) triggers the "Deploy personal website to GitHub Pages"
+  workflow; the repo's own "Refresh public website data" workflow also commits there daily.
+- A daily schedule runs at 02:00 UTC (8 PM Mexico City, UTC-6) via the harness scheduler
+  (`GET /schedules`, API on port 8000) to refresh data, commit only specific files and push to `main`.
+- Never commit credential files (`strava_tokens.json`, `token.json`, `.env`).
+- **Always push**: after any change to the website repo, commit and `git push origin main`
+  without being asked, then verify `git status -sb` shows local and `origin/main` in sync.

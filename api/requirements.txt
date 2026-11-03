@@ -6,3 +6,11 @@ google-auth[requests]==2.40.3
 # Slack bot (Socket Mode). Pulls in slack_sdk; the builtin Socket Mode client
 # needs no extra deps.
 slack_bolt==1.21.2
+# Instagram cards keep an editable SVG source and render a PNG for Meta. resvg
+# ships a self-contained binary wheel, so the VM needs no native Cairo package.
+resvg-py==0.3.2
+# Draft previews are hosted in a dedicated Google Cloud Storage bucket.
+google-cloud-storage==2.19.0
+
+# Google Drive read-only ingestion
+google-auth[requests]==2.40.3

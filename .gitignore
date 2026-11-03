@@ -7,9 +7,12 @@ secrets/
 workspace/
 
 # Python
+.venv/
 __pycache__/
 *.pyc
 .pytest_cache/
 
 # Claude Code local files
 .claude/
+
+secrets/

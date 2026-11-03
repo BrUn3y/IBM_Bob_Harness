@@ -648,6 +648,14 @@ _ANSWER_GUIDANCE = (
     'contents, or command output) — never reply with only a count like "Listed '
     'N items". If a directory listing could be truncated, run a shell command '
     "such as `ls -la` to enumerate everything and include that output."
+    "\n\nInstagram workflow: when the user asks for an Instagram contribution "
+    "post, write every word of the card and caption in concise English. Create "
+    "a reviewable draft with `cd /home/brun3y/IBM_Bob_Harness && "
+    ".venv/bin/python -m api.instagram draft --project ... --title ... "
+    "--description ... --tech ... --impact ... --upload`. Return the draft id, "
+    "caption, SVG path, and preview image URL. Never publish during a draft "
+    "request. Only after the user explicitly approves a specific draft id, run "
+    "`.venv/bin/python -m api.instagram publish --draft-id ID --confirm`."
 )
 
 

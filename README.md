@@ -456,6 +456,37 @@ from Bob in-thread. To limit the bot to specific channels, set
 | `SLACK_EVENT_TTL_SECONDS` | `3600` | Duplicate-event retention window |
 | `SLACK_MAX_CONCURRENT` | `2` | Maximum simultaneous Slack-triggered runs |
 
+### 4.4 Instagram contribution cards
+
+Bob can turn a short engineering contribution into a portrait technical card.
+The workflow deliberately separates review from publication:
+
+```bash
+# 1. Create editable SVG + Instagram-compatible PNG and upload a preview.
+python3 -m api.instagram draft \
+  --project "IBM Bob Harness" \
+  --title "Added a verified publishing pipeline" \
+  --description "Built a two-step workflow for reviewable engineering posts." \
+  --tech "Python,FastAPI,Google Cloud,Meta Graph API" \
+  --impact "Draft review prevents accidental publication." \
+  --upload
+
+# 2. Only after the user approves the returned draft id.
+python3 -m api.instagram publish --draft-id 20261016-... --confirm
+```
+
+The source SVG, rendered PNG, caption, and JSON manifest are retained in
+`IG_OUTPUT_DIR`. Instagram cannot ingest SVG directly, so Meta receives a
+temporary public URL for the rendered PNG. `IG_MEDIA_BUCKET` remains private;
+the tool makes only that draft object public, deletes it immediately after
+`media_publish` succeeds, and relies on a 24-hour bucket lifecycle rule as a
+fallback for failed or abandoned runs. The VM's service account needs object
+admin access so it can upload, set the temporary ACL, and delete the object.
+
+When requested from Slack, Bob always drafts first and returns the draft id and
+preview URL. A later message must explicitly approve that draft before Bob uses
+the guarded `publish --confirm` command. Card and caption copy are English-only.
+
 ---
 
 ## 5. Schedule recurring tasks (cron)
@@ -606,6 +637,12 @@ pytest -v
 | `SLACK_UPLOAD_CLEANUP_SECONDS` | `3600` | env | Background cleanup interval (`0` disables it) |
 | `SLACK_EVENT_TTL_SECONDS` | `3600` | env | Window for suppressing duplicate Slack events |
 | `SLACK_MAX_CONCURRENT` | `2` | env | Concurrent Slack-triggered Bob runs |
+| `IG_OUTPUT_DIR` | `workspace/instagram` | env | Editable SVG, PNG, caption, and draft manifests |
+| `IG_MEDIA_BUCKET` | — | `.env` | Private GCS bucket for temporary Meta-readable PNG objects |
+| `INSTAGRAM_USER_ID` | — | `.env` | Instagram professional account id used by Graph API |
+| `META_ACCESS_TOKEN` | — | `.env` | Long-lived Meta access token with Instagram publishing access |
+| `META_GRAPH_BASE_URL` | `https://graph.facebook.com` | env | `graph.instagram.com` for Instagram Login; Facebook host for Page-linked apps |
+| `META_GRAPH_VERSION` | `v24.0` | env | Pinned Meta Graph API version |
 | `HARNESS_URL` | `http://localhost:8080` | compose | REST API URL the Slack bot + cron call (same container under `serve-all`) |
 | `BOB_SCHEDULES_FILE` | `/workspace/schedules.json` | env | Persisted schedule registry (survives restarts) |
 | `BOB_CRON_LOG` | `/workspace/cron.log` | env | Where each cron tick logs its curl output |
@@ -628,3 +665,7 @@ pytest -v
 Edgar Bruney
 
 _Last updated: 2026-11-03_
+
+## Google Drive / Gemini Live
+
+Ingestion from **Workspace_agent** is configured in [DRIVE_SETUP.md](DRIVE_SETUP.md).
