@@ -1,4 +1,4 @@
-"""Thin REST harness in front of Bob Shell.
+"""Remote Bob REST API in front of IBM Bob Shell.
 
 Bob Shell has no native server mode, so this drives its non-interactive
 `bob run --mode <mode> "<prompt>"` invocation. Requests shell out to `bob`, which
@@ -55,7 +55,7 @@ async def _lifespan(app: "FastAPI"):
     yield
 
 
-app = FastAPI(title="IBM Bob Shell REST Harness", version="1.4.0", lifespan=_lifespan)
+app = FastAPI(title="Remote Bob API", version="1.4.0", lifespan=_lifespan)
 
 # Defaults come from the container env (see Dockerfile / .env).
 DEFAULT_MODE = os.environ.get("BOB_MODE", "unrestricted-dev")

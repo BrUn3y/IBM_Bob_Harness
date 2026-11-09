@@ -31,7 +31,7 @@ fi
 # schedules yet. `cron` daemonizes on its own.
 start_cron() {
   if command -v cron >/dev/null 2>&1; then
-    cron && echo "Bob harness: cron daemon started (scheduler enabled)"
+    cron && echo "Remote Bob: cron daemon started (scheduler enabled)"
   else
     echo "WARNING: 'cron' not found; scheduled runs will not fire." >&2
   fi
@@ -39,7 +39,7 @@ start_cron() {
 
 case "${1:-serve}" in
   serve)
-    echo "Bob harness: starting REST API on 0.0.0.0:8080 (mode=${BOB_MODE:-unrestricted-dev})"
+    echo "Remote Bob: starting REST API on 0.0.0.0:8080 (mode=${BOB_MODE:-unrestricted-dev})"
     start_cron
     cd /app
     exec uvicorn server:app --host 0.0.0.0 --port 8080
@@ -51,10 +51,10 @@ case "${1:-serve}" in
     # starts successfully without Slack credentials.
     if [ -n "${SLACK_BOT_TOKEN:-}" ] && [ -n "${SLACK_APP_TOKEN:-}" ]; then
       SLACK_ENABLED=true
-      echo "Bob harness: starting REST API + Slack bot in one container"
+      echo "Remote Bob: starting REST API + Slack bot in one container"
     else
       SLACK_ENABLED=false
-      echo "Bob harness: SLACK_BOT_TOKEN / SLACK_APP_TOKEN not set — starting REST API only (Slack bot disabled)"
+      echo "Remote Bob: SLACK_BOT_TOKEN / SLACK_APP_TOKEN not set — starting REST API only (Slack bot disabled)"
     fi
     start_cron
     cd /app
@@ -66,7 +66,7 @@ case "${1:-serve}" in
         curl -fsS http://localhost:8080/health >/dev/null 2>&1 && break
         sleep 0.5
       done
-      HARNESS_URL="${HARNESS_URL:-http://localhost:8080}" python3 slack_bot.py &
+      python3 slack_bot.py &
       bot=$!
       wait -n "$api" "$bot"
       ec=$?
@@ -79,18 +79,18 @@ case "${1:-serve}" in
     ;;
   slack)
     # Bidirectional Slack bot (Socket Mode). Talks to the REST API over HTTP,
-    # so it needs HARNESS_URL + the SLACK_* tokens (see .env / docker-compose).
-    echo "Bob harness: starting Slack bot (harness=${HARNESS_URL:-http://localhost:8080})"
+    # so it needs REMOTE_BOB_URL (or legacy HARNESS_URL) + the SLACK_* tokens.
+    echo "Remote Bob: starting Slack bot (api=${REMOTE_BOB_URL:-${HARNESS_URL:-http://localhost:8080}})"
     cd /app
     exec python3 slack_bot.py
     ;;
   shell)
-    # Interactive bob session:  docker run -it bob-harness shell
+    # Interactive bob session:  docker run -it remote_bob shell
     shift
     exec bob "$@"
     ;;
   bob)
-    # Direct bob CLI passthrough:  docker run bob-harness bob -p "..." --yolo
+    # Direct bob CLI passthrough:  docker run remote_bob bob -p "..." --yolo
     shift
     exec bob "$@"
     ;;

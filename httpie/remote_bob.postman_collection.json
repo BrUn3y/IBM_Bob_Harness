@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "IBM Bob Shell REST Harness",
-    "description": "All endpoints of the Bob Harness API (v1.3.0).\n\nBase URL is the {{baseUrl}} variable (default http://localhost:8080).\nNo auth header is required (BOBSHELL_API_KEY is used by Bob internally).\nFor path params, set the run_id / schedule_id collection variables.",
+    "name": "Remote Bob API",
+    "description": "All endpoints of the Remote Bob API (v1.4.0).\n\nBase URL is the {{baseUrl}} variable (default http://localhost:8080).\nNo auth header is required (BOBSHELL_API_KEY is used by Bob internally).\nFor path params, set the run_id / schedule_id collection variables.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

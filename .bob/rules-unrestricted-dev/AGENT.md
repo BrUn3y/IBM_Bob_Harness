@@ -1,11 +1,11 @@
-# Project: IBM Bob Harness
+# Project: Remote Bob (`remote_bob`)
 
 A container that runs Bob Shell (IBM) autonomously, with a REST API
 (FastAPI) and a Slack bot (Socket Mode) on top.
 
 ## Context
 
-- You are inside the `bob-harness` container, in `unrestricted-dev` + `--yolo` mode.
+- You are inside the `remote_bob` container, in `unrestricted-dev` + `--yolo` mode.
 - Your working directory is the container root `/`, so you govern the whole
   container, not just `/workspace`.
 - You have full freedom: create, edit, and run whatever you need, anywhere.

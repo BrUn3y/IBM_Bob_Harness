@@ -3,8 +3,10 @@
 These tests never call the real `bob` binary or the IBM API: `subprocess.run`
 and `os.makedirs` are mocked, so they run fast and offline.
 """
+import json
 import subprocess
 import time
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -29,6 +31,23 @@ def _fake_completed(returncode=0, stdout="done", stderr=""):
 # --------------------------------------------------------------------------- #
 # /health
 # --------------------------------------------------------------------------- #
+def test_openapi_uses_remote_bob_name(client):
+    schema = client.get("/openapi.json").json()
+    assert schema["info"]["title"] == "Remote Bob API"
+
+
+def test_openapi_export_matches_api_identity_and_routes(client):
+    exported = Path(__file__).resolve().parents[1] / "httpie" / "remote_bob.openapi.json"
+    if not exported.is_file():
+        pytest.skip("The OpenAPI export is only included in a repository checkout.")
+    saved = json.loads(exported.read_text(encoding="utf-8"))
+    live = client.get("/openapi.json").json()
+    assert saved["info"] == live["info"]
+    assert {path: set(methods) for path, methods in saved["paths"].items()} == {
+        path: set(methods) for path, methods in live["paths"].items()
+    }
+
+
 def test_health_ok(client):
     with patch.object(server, "_bob_available", return_value=True):
         r = client.get("/health")
