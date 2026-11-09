@@ -331,7 +331,18 @@ A job view looks like:
 }
 ```
 
-`status` is one of `pending | running | completed | failed | timeout`.
+`status` is one of
+`pending | running | cancelling | cancelled | completed | failed | timeout`.
+If the operating system cannot start Bob (for example, permission denied or an
+invalid executable format), the job reaches `failed` with exit code `126` and
+the diagnostic in `output`; a missing executable uses `127`. Invalid bytes in
+streamed output are replaced rather than leaving a background job unfinished.
+
+The in-memory registry evicts the oldest **finished** runs when a new run is
+registered and `BOB_MAX_JOBS` is exceeded. Active runs remain available for
+polling, streaming and cancellation, even if this temporarily exceeds the
+retention target. This is not a concurrency or output-size limit; job history
+is still lost when the API restarts.
 
 ### `POST /run` — orchestrated run (verify + retry)
 
@@ -598,13 +609,16 @@ podman compose run --rm bob bob run --accept-license --mode unrestricted-dev "Ex
 
 ## 7. Tests
 
-Unit tests live in `api/test_server.py` (REST API), `api/test_slack_bot.py`
-(Slack bot logic), and `api/test_schedules.py` (cron scheduler). They mock
-`subprocess`, `crontab`, and the network, so they never call the real `bob`
-binary, the IBM API, cron, or Slack — fast and offline. They cover `/health`,
+Tests live in `api/test_server.py` (REST API), `api/test_slack_bot.py`
+(Slack bot logic), and `api/test_schedules.py` (cron scheduler). Most subprocesses,
+`crontab`, and network calls are mocked; a few tests run local Python/bash
+children to exercise output decoding, cancellation, timeout and verify/retry.
+They never call the real `bob` binary, the IBM API, cron, or Slack. They cover `/health`,
 `/invoke`, the async `/jobs` lifecycle, `/stream` (SSE), the `/run` orchestration
 loop (verify + retry), the bot's `should_handle` / `run_prompt` / `build_reply`
 helpers, and the scheduler's cron validation / crontab generation / CRUD.
+Regression tests also cover launch errors reaching a terminal state, SSE
+completion after failures, and retaining active jobs under registry pressure.
 
 Run them inside the built image (which already has the runtime deps):
 
@@ -628,7 +642,7 @@ pytest -v
 | `BOBSHELL_API_KEY` | — | `.env` | **Required.** Authenticates Bob in headless mode |
 | `BOB_MODE` | `unrestricted-dev` | `.env` / compose | Default custom mode slug |
 | `BOB_WORKDIR` | `/` | `.env` / compose | Default working directory (`/` = whole container) |
-| `BOB_MAX_JOBS` | `100` | env | Max runs kept in memory (oldest evicted) |
+| `BOB_MAX_JOBS` | `100` | env | In-memory retention target; oldest finished runs evicted on registration, active runs retained |
 | `BOB_BIN` | `bob` | env | Path/name of the Bob binary |
 | `NODE_VERSION` | `24.21.0-1nodesource1` | build arg | Pinned NodeSource package version |
 | `BOB_VERSION` | `2.0.5` | build arg | Pinned Bob Shell version |

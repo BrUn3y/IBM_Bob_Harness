@@ -222,6 +222,7 @@ def _stream_exec(sink: BaseRun, cmd: list[str], cwd: str, timeout: int) -> tuple
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            errors="replace",
             bufsize=1,
             env=dict(os.environ),
             start_new_session=True,
@@ -230,6 +231,10 @@ def _stream_exec(sink: BaseRun, cmd: list[str], cwd: str, timeout: int) -> tuple
         msg = f"'{cmd[0]}' not found on PATH\n"
         sink._append(msg)
         return msg, 127, False
+    except OSError as exc:
+        msg = f"[harness] could not start '{cmd[0]}': {exc}\n"
+        sink._append(msg)
+        return msg, 126, False
     sink._set_process(proc)
     if sink.cancel_requested.is_set():
         _kill_process_group(proc)
@@ -402,8 +407,13 @@ _runs_lock = threading.Lock()
 def _register(run: BaseRun) -> None:
     with _runs_lock:
         _runs[run.id] = run
-        while len(_runs) > MAX_JOBS:
-            _runs.popitem(last=False)  # evict oldest
+        # Active runs must remain reachable for polling, streaming and cancel.
+        # Allow temporary overflow when no finished runs can be evicted.
+        for run_id, candidate in list(_runs.items()):
+            if len(_runs) <= MAX_JOBS:
+                break
+            if candidate.done.is_set():
+                del _runs[run_id]
 
 
 def _get(run_id: str) -> BaseRun:

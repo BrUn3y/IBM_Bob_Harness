@@ -1,10 +1,13 @@
 """Unit tests for the Bob REST API wrapper.
 
-These tests never call the real `bob` binary or the IBM API: `subprocess.run`
-and `os.makedirs` are mocked, so they run fast and offline.
+These tests never call the real `bob` binary or the IBM API. Most subprocesses
+are mocked; a few local Python/bash children exercise streaming and lifecycle
+behavior without credentials or network access.
 """
+import errno
 import json
 import subprocess
+import sys
 import time
 from pathlib import Path
 from unittest.mock import patch
@@ -235,6 +238,104 @@ def test_job_bob_not_found(client):
     assert "not found" in view["output"]
 
 
+@pytest.mark.parametrize("endpoint", ["/jobs", "/run"])
+@pytest.mark.parametrize(
+    "error",
+    [
+        PermissionError(errno.EACCES, "Permission denied", "/fake/bob"),
+        OSError(errno.ENOEXEC, "Exec format error", "/fake/bob"),
+    ],
+)
+def test_background_launch_error_reaches_failed(client, endpoint, error):
+    with patch.object(server.os, "makedirs"), patch.object(
+        server.subprocess, "Popen", side_effect=error
+    ):
+        response = client.post(endpoint, json={"prompt": "x"})
+        assert response.status_code == 202
+        run = server._get(response.json()["id"])
+        assert run.done.wait(timeout=5), "launch error left the run unfinished"
+        view = client.get(f"/jobs/{run.id}").json()
+
+    assert view["status"] == "failed"
+    assert str(error) in view["output"]
+    if endpoint == "/jobs":
+        assert view["exit_code"] == 126
+    else:
+        assert view["success"] is False
+        assert view["attempts"][0]["bob_exit_code"] == 126
+
+
+def test_job_replaces_invalid_output_bytes(client):
+    cmd = [sys.executable, "-c", "import os; os.write(1, b'hello\\xffworld\\n')"]
+    with patch.object(server.os, "makedirs"), patch.object(
+        server, "_bob_cmd", return_value=cmd
+    ):
+        jid = client.post("/jobs", json={"prompt": "x"}).json()["id"]
+        run = server._get(jid)
+        assert run.done.wait(timeout=5), "invalid output left the job unfinished"
+        view = client.get(f"/jobs/{jid}").json()
+
+    assert view["status"] == "completed"
+    assert view["exit_code"] == 0
+    assert view["output"] == "hello\ufffdworld\n"
+    stream = client.get(f"/jobs/{jid}/stream")
+    assert stream.status_code == 200
+    assert "data: hello\ufffdworld\n\n" in stream.text
+    assert 'event: done\ndata: {"status": "completed", "success": null}' in stream.text
+
+
+@pytest.mark.parametrize("status", ["pending", "running", "cancelling"])
+def test_registry_keeps_active_jobs_inspectable_and_cancellable(
+    client, monkeypatch, status
+):
+    monkeypatch.setattr(server, "_runs", server.OrderedDict())
+    monkeypatch.setattr(server, "MAX_JOBS", 1)
+    active = server.Job(["bob"], "/", 1)
+    active.status = status
+    newer = server.Job(["bob"], "/", 1)
+
+    server._register(active)
+    server._register(newer)
+
+    assert client.get(f"/jobs/{active.id}").status_code == 200
+    assert client.get(f"/jobs/{newer.id}").status_code == 200
+    assert {item["id"] for item in client.get("/jobs").json()["runs"]} == {
+        active.id, newer.id
+    }
+    response = client.delete(f"/jobs/{active.id}")
+    assert response.status_code == 200
+    assert response.json()["cancel_requested"] is True
+    assert active.cancel_requested.is_set()
+
+
+def test_registry_evicts_oldest_finished_job_not_oldest_active(monkeypatch):
+    monkeypatch.setattr(server, "_runs", server.OrderedDict())
+    monkeypatch.setattr(server, "MAX_JOBS", 3)
+    active, oldest_done, newest_done, new = [
+        server.Job(["bob"], "/", 1) for _ in range(4)
+    ]
+    for run in (oldest_done, newest_done):
+        run.status = "completed"
+        run.done.set()
+    for run in (active, oldest_done, newest_done, new):
+        server._register(run)
+
+    assert list(server._runs) == [active.id, newest_done.id, new.id]
+
+
+def test_registry_prunes_finished_jobs_after_active_overflow(monkeypatch):
+    monkeypatch.setattr(server, "_runs", server.OrderedDict())
+    monkeypatch.setattr(server, "MAX_JOBS", 1)
+    first, second, new = [server.Job(["bob"], "/", 1) for _ in range(3)]
+    server._register(first)
+    server._register(second)
+    first.done.set()
+    second.done.set()
+    server._register(new)
+
+    assert list(server._runs) == [new.id]
+
+
 def test_get_unknown_job_returns_404(client):
     assert client.get("/jobs/deadbeef").status_code == 404
 
@@ -398,3 +499,63 @@ def test_run_exhausts_attempts(client):
     assert view["success"] is False
     assert view["status"] == "failed"
     assert len(view["attempts"]) == 2
+
+
+def test_run_check_launch_error_finishes_and_streams_failure(client):
+    error = PermissionError(errno.EACCES, "Permission denied", "/fake/bash")
+    with patch.object(server.os, "makedirs"), patch.object(
+        server.subprocess, "Popen", side_effect=[FakePopen(["built\n"]), error]
+    ):
+        response = client.post(
+            "/run", json={"prompt": "x", "check": "verify", "max_attempts": 1}
+        )
+        assert response.status_code == 202
+        run = server._get(response.json()["id"])
+        assert run.done.wait(timeout=5)
+        view = client.get(f"/jobs/{run.id}").json()
+        stream = client.get(f"/jobs/{run.id}/stream")
+
+    assert view["status"] == "failed"
+    assert view["success"] is False
+    assert view["attempts"] == [{
+        "attempt": 1,
+        "bob_exit_code": 0,
+        "check_exit_code": 126,
+        "check_timed_out": False,
+    }]
+    assert str(error) in view["output"]
+    assert 'event: done\ndata: {"status": "failed", "success": false}' in stream.text
+
+
+def test_run_retries_with_real_local_processes(client, tmp_path):
+    scripts = [
+        "print('first attempt')",
+        "from pathlib import Path; Path('verified.txt').touch(); print('fixed')",
+    ]
+    commands = [[sys.executable, "-c", script] for script in scripts]
+    with patch.object(server, "_bob_cmd", side_effect=commands) as bob_cmd:
+        response = client.post(
+            "/run",
+            json={
+                "prompt": "create verified.txt",
+                "workdir": str(tmp_path),
+                "check": "test -f verified.txt",
+                "max_attempts": 2,
+                "timeout": 5,
+                "check_timeout": 5,
+            },
+        )
+        assert response.status_code == 202
+        run = server._get(response.json()["id"])
+        assert run.done.wait(timeout=10), "local verify/retry flow did not finish"
+        view = client.get(f"/jobs/{run.id}").json()
+        stream = client.get(f"/jobs/{run.id}/stream")
+
+    assert view["status"] == "completed"
+    assert view["success"] is True
+    assert [attempt["check_exit_code"] for attempt in view["attempts"]] == [1, 0]
+    assert all(attempt["bob_exit_code"] == 0 for attempt in view["attempts"])
+    assert "--- HARNESS FEEDBACK ---" in bob_cmd.call_args_list[1].args[0]
+    assert "first attempt" in view["output"] and "fixed" in view["output"]
+    assert (tmp_path / "verified.txt").is_file()
+    assert 'event: done\ndata: {"status": "completed", "success": true}' in stream.text
