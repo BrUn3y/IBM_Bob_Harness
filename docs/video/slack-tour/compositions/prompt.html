@@ -1,21 +1,21 @@
 <template>
   <style>#root { position: absolute; inset: 0; }</style>
   <section id="root" class="scene" data-composition-id="prompt" data-width="1920" data-height="1080">
-    <header class="heading"><h1>Escribe tu tarea. <span class="accent">Sin @mención.</span></h1><p>Bob responde a mensajes humanos en los canales donde está invitado</p></header>
+    <header class="heading"><h1>Describe the task. <span class="accent">No @mention.</span></h1><p>Bob responds to human messages in channels where it has been invited</p></header>
     <div class="slack">
-      <aside class="sidebar"><div class="workspace">Equipo Demo</div><div class="side-label">Canales</div><div class="side-channel"># desarrollo</div><div class="side-idle"># reportes</div></aside>
+      <aside class="sidebar"><div class="workspace">Demo Team</div><div class="side-label">Channels</div><div class="side-channel"># development</div><div class="side-idle"># reports</div></aside>
       <div class="channel">
-        <div class="channel-head"># desarrollo</div>
+        <div class="channel-head"># development</div>
         <div class="conversation">
-          <div class="message"><div class="avatar">TÚ</div><div><div class="author">Tú</div><p>Revisa <code>/workspace/app.py</code> y propone una mejora.</p></div></div>
-          <div id="prompt-thinking" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP · Hilo</small></div><p class="thinking">Bob is thinking…</p></div></div>
-          <div id="prompt-answer" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP · Hilo</small></div><p>Falta validar las entradas vacías.<br>Propongo devolver un error claro antes de procesarlas.</p></div></div>
+          <div class="message"><div class="avatar">U</div><div><div class="author">You</div><p>Review <code>/workspace/app.py</code> and suggest an improvement.</p></div></div>
+          <div id="prompt-thinking" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP · Thread</small></div><p class="thinking">Bob is thinking…</p></div></div>
+          <div id="prompt-answer" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP · Thread</small></div><p>Empty input is not validated.<br>I suggest returning a clear error before processing it.</p></div></div>
         </div>
-        <div class="composer">Mensaje a #desarrollo<div class="send"><img src="assets/icons/send.svg" alt=""></div></div>
+        <div class="composer">Message #development<div class="send"><img src="assets/icons/send.svg" alt=""></div></div>
       </div>
     </div>
-    <div id="prompt-note" class="callout">El indicador de trabajo se actualiza mientras esperas.</div>
-    <footer class="foot"><span>DEMO ILUSTRATIVA · Resultado de ejemplo</span><span class="chapter">Pedir una tarea</span></footer>
+    <div id="prompt-note" class="callout">The working indicator updates while you wait.</div>
+    <footer class="foot"><span>ILLUSTRATIVE DEMO · Example response</span><span class="chapter">Request a task</span></footer>
     <div class="bar"><span id="prompt-progress"></span></div>
   </section>
   <script>

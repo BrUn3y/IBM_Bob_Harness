@@ -4,7 +4,7 @@ GOAL: Follow one example from a channel request to a thread reply, then learn
 attachments, cancellation, recurring reports, and the optional verification API.
 
 OUTPUT: HyperFrames 0.9.26, 1920 x 1080, 30 fps, 110 seconds (3300 frames).
-Spanish on-screen copy. Silent, deliberately designed for README viewing
+English-only on-screen copy. Silent, deliberately designed for README viewing
 without audio. No paid services, real Slack messages, tokens, or live jobs.
 
 LOOK: White #ffffff, ink #1d1c1d, teal #117a66, Slack aubergine #3f0e40,

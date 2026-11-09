@@ -1,20 +1,20 @@
 <template>
   <style>#root { position: absolute; inset: 0; }</style>
   <section id="root" class="scene" data-composition-id="schedule" data-width="1920" data-height="1080">
-    <header class="heading"><h1>Pide un <span class="accent">reporte recurrente</span></h1><p>Indica la tarea, la hora UTC y el canal donde quieres el resultado</p></header>
+    <header class="heading"><h1>Schedule <span class="accent">a recurring report</span></h1><p>Specify the task, the UTC time and the channel for the result</p></header>
     <div class="slack">
-      <aside class="sidebar"><div class="workspace">Equipo Demo</div><div class="side-label">Canales</div><div class="side-channel"># desarrollo</div><div class="side-idle"># reportes</div></aside>
+      <aside class="sidebar"><div class="workspace">Demo Team</div><div class="side-label">Channels</div><div class="side-channel"># development</div><div class="side-idle"># reports</div></aside>
       <div class="channel">
-        <div class="channel-head"># desarrollo</div>
+        <div class="channel-head"># development</div>
         <div class="conversation">
-          <div class="message"><div class="avatar">TÚ</div><div><div class="author">Tú</div><p>Cada día a las 14:00 UTC revisa <code>/workspace</code><br>y publica el resumen aquí.</p></div></div>
-          <div id="schedule-confirm" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP · Ejemplo de confirmación</small></div><p>Programación: <code>0 14 * * *</code> · Todos los días, 14:00 UTC<br>ID de ejemplo: <code>a1b2c3d4e5f6</code> · Entrega en este canal</p></div></div>
-          <div id="schedule-result" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>Ejemplo de reporte posterior</small></div><p class="result">Resumen de /workspace: cambios y próximos pasos.</p></div></div>
+          <div class="message"><div class="avatar">U</div><div><div class="author">You</div><p>Every day at 14:00 UTC, review <code>/workspace</code><br>and post the summary here.</p></div></div>
+          <div id="schedule-confirm" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP · Example confirmation</small></div><p>Schedule: <code>0 14 * * *</code> · Daily at 14:00 UTC<br>Example ID: <code>a1b2c3d4e5f6</code> · Deliver to this channel</p></div></div>
+          <div id="schedule-result" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>Example of a later report</small></div><p class="result">Summary of /workspace: changes and next steps.</p></div></div>
         </div>
       </div>
     </div>
-    <div id="schedule-note" class="callout">Cada ejecución usa un prompt autónomo, sin historial del chat.</div>
-    <footer class="foot"><span>DEMO ILUSTRATIVA · No se ha creado ninguna programación</span><span class="chapter">Automatizar reportes</span></footer>
+    <div id="schedule-note" class="callout">Each run uses a self-contained prompt, without chat history.</div>
+    <footer class="foot"><span>ILLUSTRATIVE DEMO · No schedule was created</span><span class="chapter">Automate reports</span></footer>
     <div class="bar"><span id="schedule-progress"></span></div>
   </section>
   <script>

@@ -1,6 +1,6 @@
 # Remote Bob Slack Tour
 
-Editable HyperFrames source for the Spanish, 110-second visual tutorial.
+Editable HyperFrames source for the English-only, 110-second visual tutorial.
 The Slack interface is an **illustrative reconstruction**, not a recording of
 a live workspace. Outputs, timestamps, files and schedule IDs are examples.
 No Slack or IBM API requests are made by this video.
@@ -11,11 +11,12 @@ Requires Node.js 22+, FFmpeg and a Chromium browser. HyperFrames is pinned in
 `package.json`; GSAP, Inter and Lucide assets are bundled locally.
 
 ```bash
+npm run check:copy
 npm run check
 npx --yes hyperframes@0.9.26 preview --background
 npm run render -- --quality delivery --fps 30 --strict \
-  -o renders/remote-bob-slack-es.mp4
-npm run verify -- renders/remote-bob-slack-es.mp4
+  -o renders/remote-bob-slack-en.mp4
+npm run verify -- renders/remote-bob-slack-en.mp4
 ```
 
 On a machine with an existing Chromium installation, set
@@ -25,8 +26,11 @@ For a software-only Linux renderer, `PRODUCER_FORCE_SCREENSHOT=true` and
 `--workers 1` allows safe reuse of static reading frames.
 
 The tutorial intentionally works without audio. All instructions are visible
-in Spanish; English status text matches the bot's current messages.
+in English, including example messages, filenames, channel names and safety
+notices. Status text matches the bot's current English messages.
 The root README uses a short animated GIF preview linked to the complete MP4.
+`npm run check:copy` checks the English HTML language declaration and guards
+against Spanish text from the earlier draft returning to the compositions.
 The verification script checks duration, codec, resolution, frame count and
 frame rate, decodes the file with FFmpeg, and samples every second for blank
 frames. It does not establish the semantic correctness of the illustrated

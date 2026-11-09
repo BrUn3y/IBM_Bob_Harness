@@ -1,20 +1,20 @@
 <template>
   <style>#root { position: absolute; inset: 0; }</style>
   <section id="root" class="scene" data-composition-id="cancel" data-width="1920" data-height="1080">
-    <header class="heading"><h1>¿Necesitas parar? <span class="accent">Escribe cancelar</span></h1><p>Envía el comando exacto en el hilo del trabajo activo</p></header>
+    <header class="heading"><h1>Need to stop? <span class="accent">Type cancel</span></h1><p>Send the exact command in the thread of the active job</p></header>
     <div class="slack">
-      <aside class="sidebar"><div class="workspace">Equipo Demo</div><div class="side-label">Canales</div><div class="side-channel"># desarrollo</div><div class="side-idle"># reportes</div></aside>
+      <aside class="sidebar"><div class="workspace">Demo Team</div><div class="side-label">Channels</div><div class="side-channel"># development</div><div class="side-idle"># reports</div></aside>
       <div class="channel">
-        <div class="channel-head">Hilo <small># desarrollo</small></div>
+        <div class="channel-head">Thread <small># development</small></div>
         <div class="conversation">
           <div class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP</small></div><p class="thinking">Bob is working on it…</p></div></div>
-          <div id="cancel-command" class="message"><div class="avatar">TÚ</div><div><div class="author">Tú</div><p class="command">cancelar</p></div></div>
+          <div id="cancel-command" class="message"><div class="avatar">U</div><div><div class="author">You</div><p class="command">cancel</p></div></div>
           <div id="cancel-request" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP</small></div><p>Cancellation requested.</p><p id="cancel-final" class="result">Bob job cancelled.</p></div></div>
         </div>
       </div>
     </div>
-    <div id="cancel-alternatives" class="callout">También acepta: cancel · stop · detener</div>
-    <footer class="foot"><span>DEMO ILUSTRATIVA · Solicitud y estado final</span><span class="chapter">Cancelar un trabajo</span></footer>
+    <div id="cancel-alternatives" class="callout">Also accepts: stop</div>
+    <footer class="foot"><span>ILLUSTRATIVE DEMO · Request and final state</span><span class="chapter">Cancel a job</span></footer>
     <div class="bar"><span id="cancel-progress"></span></div>
   </section>
   <script>

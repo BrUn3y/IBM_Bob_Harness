@@ -1,20 +1,20 @@
 <template>
   <style>#root { position: absolute; inset: 0; }</style>
   <section id="root" class="scene" data-composition-id="context" data-width="1920" data-height="1080">
-    <header class="heading"><h1>Continúa <span class="accent">en el mismo hilo</span></h1><p>Los mensajes anteriores del hilo vuelven a Bob como contexto</p></header>
+    <header class="heading"><h1>Continue <span class="accent">in the same thread</span></h1><p>Earlier messages in the thread are passed back to Bob as context</p></header>
     <div class="slack">
-      <aside class="sidebar"><div class="workspace">Equipo Demo</div><div class="side-label">Canales</div><div class="side-channel"># desarrollo</div><div class="side-idle"># reportes</div></aside>
+      <aside class="sidebar"><div class="workspace">Demo Team</div><div class="side-label">Channels</div><div class="side-channel"># development</div><div class="side-idle"># reports</div></aside>
       <div class="channel">
-        <div class="channel-head">Hilo <small># desarrollo</small></div>
+        <div class="channel-head">Thread <small># development</small></div>
         <div class="conversation">
-          <div class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>Respuesta anterior</small></div><p>Propongo validar las entradas vacías.</p></div></div>
-          <div id="context-followup" class="message"><div class="avatar">TÚ</div><div><div class="author">Tú</div><p>Ahora agrega pruebas para ese cambio.</p></div></div>
-          <div id="context-answer" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP</small></div><p>Voy a cubrir la entrada vacía y el caso válido<br>sobre el mismo archivo que acabamos de revisar.</p></div></div>
+          <div class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>Earlier reply</small></div><p>I suggest validating empty input.</p></div></div>
+          <div id="context-followup" class="message"><div class="avatar">U</div><div><div class="author">You</div><p>Now add tests for that change.</p></div></div>
+          <div id="context-answer" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP</small></div><p>I'll cover empty input and the valid case<br>in the same file we just reviewed.</p></div></div>
         </div>
-        <div class="composer">Responder en el hilo<div class="send"><img src="assets/icons/send.svg" alt=""></div></div>
+        <div class="composer">Reply in the thread<div class="send"><img src="assets/icons/send.svg" alt=""></div></div>
       </div>
     </div>
-    <footer class="foot"><span>DEMO ILUSTRATIVA · No es memoria global entre canales</span><span class="chapter">Contexto por hilo</span></footer>
+    <footer class="foot"><span>ILLUSTRATIVE DEMO · Not global memory across channels</span><span class="chapter">Thread context</span></footer>
     <div class="bar"><span id="context-progress"></span></div>
   </section>
   <script>

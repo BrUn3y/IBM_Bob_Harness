@@ -13,15 +13,15 @@
 > `bob run --accept-license --mode unrestricted-dev "<prompt>"` invocation and adds a
 > verify/retry loop on top (API version `1.4.0`).
 
-## Video: Remote Bob en Slack
+## Video: Remote Bob in Slack
 
-[![Remote Bob en Slack: animated preview of the Spanish visual tutorial](docs/media/remote-bob-slack-es-preview.gif)](docs/media/remote-bob-slack-es.mp4)
+[![Remote Bob in Slack: animated preview of the English visual tutorial](docs/media/remote-bob-slack-en-preview.gif)](docs/media/remote-bob-slack-en.mp4)
 
-**[Watch the video / Ver el video (MP4, 1:50)](docs/media/remote-bob-slack-es.mp4)**
-· **[v1.0.4 release notes](https://github.com/BrUn3y/remote_bob/releases/tag/v1.0.4#video-remote-bob-en-slack)**
+**[Watch the video (MP4, 1:50)](docs/media/remote-bob-slack-en.mp4)**
+· **[v1.0.4 release notes](https://github.com/BrUn3y/remote_bob/releases/tag/v1.0.4#video-remote-bob-in-slack)**
 · [Editable HyperFrames source and chapters](docs/video/slack-tour/README.md)
 
-A Spanish visual walkthrough of app setup, messages without an @mention,
+An English-only visual walkthrough of app setup, messages without an @mention,
 thread context, images and documents, cancellation, recurring reports with
 explicit UTC times, and security. It also explains the difference between
 Slack's `/jobs` flow and the optional `/run` verification/retry API.

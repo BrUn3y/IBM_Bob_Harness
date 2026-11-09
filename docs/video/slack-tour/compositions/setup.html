@@ -1,25 +1,25 @@
 <template>
   <style>#root { position: absolute; inset: 0; }</style>
   <section id="root" class="scene" data-composition-id="setup" data-width="1920" data-height="1080">
-    <header class="heading"><h1>Conecta Slack <span class="accent">una sola vez</span></h1><p>Crea la app con slack/manifest.yaml y activa sus tokens en .env</p></header>
+    <header class="heading"><h1>Connect Slack <span class="accent">once</span></h1><p>Create the app from slack/manifest.yaml and add its tokens to .env</p></header>
     <div class="setup-layout">
       <div class="terminal">
-        <div class="terminal-title">Configuración · valores de ejemplo</div>
-        <pre><span class="muted"># .env (nunca lo publiques)</span>
-BOBSHELL_API_KEY=&lt;tu clave&gt;
-SLACK_BOT_TOKEN=&lt;token del bot&gt;
-SLACK_APP_TOKEN=&lt;token de la app&gt;
+        <div class="terminal-title">Configuration · example values</div>
+        <pre><span class="muted"># .env (never publish this file)</span>
+BOBSHELL_API_KEY=&lt;your API key&gt;
+SLACK_BOT_TOKEN=&lt;bot token&gt;
+SLACK_APP_TOKEN=&lt;app token&gt;
 <span id="setup-start" class="green">
 $ podman compose up --build -d</span></pre>
       </div>
       <div class="setup-right">
-        <h2>Invita la app al canal</h2>
+        <h2>Invite the app to your channel</h2>
         <div id="setup-invite" class="invite">/invite @remote_bob</div>
-        <p id="setup-socket"><strong>Socket Mode</strong><br>Conexión saliente.<br>No requiere una URL pública.</p>
+        <p id="setup-socket"><strong>Socket Mode</strong><br>Outbound connection.<br>No public URL required.</p>
       </div>
     </div>
-    <p id="setup-bottom" class="setup-bottom">Docker también funciona: sustituye <strong>podman</strong> por <strong>docker</strong>.<br>Pasos completos en <strong>SLACK_SETUP.md</strong>.</p>
-    <footer class="foot"><span>DEMO ILUSTRATIVA · Nunca muestres tus tokens</span><span class="chapter">Configuración</span></footer>
+    <p id="setup-bottom" class="setup-bottom">Docker works too: replace <strong>podman</strong> with <strong>docker</strong>.<br>Full instructions in <strong>SLACK_SETUP.md</strong>.</p>
+    <footer class="foot"><span>ILLUSTRATIVE DEMO · Never show your tokens</span><span class="chapter">Setup</span></footer>
     <div class="bar"><span id="setup-progress"></span></div>
   </section>
   <script>

@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const path = process.argv[2] || fileURLToPath(
-  new URL("../../media/remote-bob-slack-es.mp4", import.meta.url),
+  new URL("../../media/remote-bob-slack-en.mp4", import.meta.url),
 );
 const metadata = JSON.parse(execFileSync("ffprobe", [
   "-v", "error", "-show_streams", "-show_format", "-of", "json", path,

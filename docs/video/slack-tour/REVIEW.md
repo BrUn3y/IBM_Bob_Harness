@@ -5,7 +5,7 @@
 One illustrative development task carries the tutorial through a channel,
 thread follow-up, requirements attachment, cancellation and a recurring
 report. A separate API scene distinguishes chat jobs from verification/retry.
-The tutorial is silent by design, with Spanish instructions on screen.
+The tutorial is silent by design, with English-only instructions on screen.
 No private workspace, real credential or live execution is shown.
 
 A live-workspace recording was not used because it would require exposing
@@ -16,16 +16,20 @@ trailer was not used because this is a practical usage guide.
 
 - Features checked against v1.0.4 (`6fc785c`), especially `api/slack_bot.py`,
   `api/server.py`, `api/schedules.py`, the Slack manifest and runtime rules.
-- Initial complete HyperFrames check passed, including its craft sweep.
-- After layout and chapter-progress adjustments, the final check passed with
+- The initial draft completed a full HyperFrames check, including its craft
+  sweep. The English revision preserves the same timing and layout.
+- The English revision passed `npm run check:copy` across all 10 HTML files.
+  Titles, chat messages, channel names, attachment names, code examples,
+  cancellation commands and safety notices were also reviewed in English.
+- The English revision passed the final HyperFrames check with
   `--no-craft --at 0,6,20,27,32,44,57,68,83,95,107`.
 - Final check: 10 HTML files, 11 layout samples, 23 overlap-pass samples,
   zero lint errors, zero runtime errors, zero layout findings, 86 of 86
   sampled contrast checks passed. Motion-sidecar assertions were not enabled.
-- Ten initial full-frame snapshots and two contact sheets were inspected,
-  plus the running HyperFrames preview in Chromium.
-- The final check did not rerun the longer craft sweep; the chapter-progress
-  adjustment replaces continuous movement with deliberate reading holds.
+- Nine English full-frame snapshots and their contact sheet were inspected,
+  one frame per chapter.
+- The English check did not rerun the longer craft sweep. Reading holds and
+  accessory-label sizes are unchanged from the initial draft.
 
 ## Accepted Warnings
 
@@ -50,15 +54,15 @@ runtime Python files changed. Audio was neither generated nor listened to.
 
 - HyperFrames render completed using screenshot capture, software rendering
   and one worker. Static-frame reuse remained verified, not forced.
-- MP4: H.264, 1920 x 1080, 30 fps, 3,300 frames, exactly 110 seconds,
-  3,057,917 bytes, no audio stream.
+- English MP4: H.264, 1920 x 1080, 30 fps, 3,300 frames, exactly 110 seconds,
+  2,912,302 bytes, no audio stream.
 - `npm run verify` passed: FFmpeg decode completed, 110 one-second samples
-  were nonblank, 49 sampled images were distinct, minimum content fraction
-  was 0.0603 (the empty-frame threshold is 0.002).
+  were nonblank, 51 sampled images were distinct, minimum content fraction
+  was 0.0583 (the empty-frame threshold is 0.002).
 - A contact sheet decoded from the final MP4 was visually inspected at 6,
   20, 32, 44, 57, 68, 83, 95 and 107 seconds.
-- README preview: 9-second GIF, 138,252 bytes. Poster: JPEG at 1280 x 720.
+- English README preview: 9-second GIF, 95,700 bytes. Poster: JPEG at 1280 x 720.
 - MP4 SHA-256:
-  `5fcc91189d2351367fa9837592737cf7f192999c10a04a8d58c86ce1970fc031`.
+  `b1ad2582e7ad347ef3d6e8a81159f477d5c92c54fc8f8d66dddfa9905f4d9730`.
 
 _Last updated: 2026-11-09_

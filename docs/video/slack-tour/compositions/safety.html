@@ -1,14 +1,14 @@
 <template>
   <style>#root { position: absolute; inset: 0; }</style>
   <section id="root" class="scene" data-composition-id="safety" data-width="1920" data-height="1080">
-    <header class="heading"><h1>Antes de usarlo: <span class="accent">canales de confianza</span></h1><p>unrestricted-dev + YOLO permite ejecutar comandos en el contenedor</p></header>
+    <header class="heading"><h1>Before you start: <span class="accent">trusted channels</span></h1><p>unrestricted-dev + YOLO allows commands to run inside the container</p></header>
     <div class="safety-layout">
-      <div class="safety-row"><img src="assets/icons/shield-check.svg" alt=""><p><strong>Restringe los canales.</strong> Configura SLACK_ALLOWED_CHANNELS.</p></div>
-      <div id="safety-local" class="safety-row"><img src="assets/icons/lock-keyhole.svg" alt=""><p><strong>Mantén la API en localhost.</strong> Todavía no tiene autenticación.</p></div>
-      <div id="safety-volume" class="safety-row"><img src="assets/icons/folder.svg" alt=""><p><strong>Conserva los archivos en /workspace.</strong><br>Es el volumen persistente; no montes datos sensibles.</p></div>
-      <p id="safety-close" class="closing">Empieza con una tarea concreta en tu canal.</p>
+      <div class="safety-row"><img src="assets/icons/shield-check.svg" alt=""><p><strong>Restrict the channels.</strong> Set SLACK_ALLOWED_CHANNELS.</p></div>
+      <div id="safety-local" class="safety-row"><img src="assets/icons/lock-keyhole.svg" alt=""><p><strong>Keep the API on localhost.</strong> It has no authentication yet.</p></div>
+      <div id="safety-volume" class="safety-row"><img src="assets/icons/folder.svg" alt=""><p><strong>Keep persistent files in /workspace.</strong><br>This is the mounted volume; do not mount sensitive data.</p></div>
+      <p id="safety-close" class="closing">Start with a specific task in your channel.</p>
     </div>
-    <footer class="foot"><span>Remote Bob v1.0.4 · Guía basada en el código · 2026-11-09</span><span class="chapter">README · SLACK_SETUP.md</span></footer>
+    <footer class="foot"><span>Remote Bob v1.0.4 · Code-based guide · 2026-11-09</span><span class="chapter">README · SLACK_SETUP.md</span></footer>
     <div class="bar"><span id="safety-progress"></span></div>
   </section>
   <script>
