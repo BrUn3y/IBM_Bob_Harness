@@ -1,0 +1,4 @@
+.hyperframes/
+.thumbnails/
+node_modules/
+renders/

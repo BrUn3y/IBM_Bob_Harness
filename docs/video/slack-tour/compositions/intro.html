@@ -1,0 +1,30 @@
+<template>
+  <style>#root { position: absolute; inset: 0; }</style>
+  <section id="root" class="scene" data-composition-id="intro" data-width="1920" data-height="1080">
+    <header class="heading">
+      <h1><span data-var-text="brand">Remote Bob</span> <span class="accent">in Slack</span></h1>
+      <p>A development task, from your channel to the result</p>
+    </header>
+    <div class="slack">
+      <aside class="sidebar"><div class="workspace">Demo Team</div><div class="side-label">Channels</div><div class="side-channel"># development</div><div class="side-idle"># reports</div></aside>
+      <div class="channel">
+        <div class="channel-head"># development <small>Trusted channel</small></div>
+        <div class="conversation">
+          <div class="message"><div class="avatar">U</div><div><div class="author">You <small>Example</small></div><p>Review <code>/workspace/app.py</code> and suggest an improvement.</p></div></div>
+          <div id="intro-answer" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP</small></div><p>We can validate the input data.<br>I'll explain the change and how to check it.</p></div></div>
+          <div id="intro-thread" class="thread-link">Continue in the thread</div>
+        </div>
+        <div class="composer">Message #development<div class="send"><img src="assets/icons/send.svg" alt=""></div></div>
+      </div>
+    </div>
+    <footer class="foot"><span>ILLUSTRATIVE DEMO · No real conversations</span><span class="chapter">Visual guide · v1.0.4</span></footer>
+    <div class="bar"><span id="intro-progress"></span></div>
+  </section>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#intro-answer", { opacity: 0, x: 28 }, { opacity: 1, x: 0, duration: 0.55, ease: "power4.out" }, 2);
+    tl.fromTo("#intro-thread", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 5);
+    tl.set("#intro-progress", { scaleX: 1 / 9 }, 0);
+    window.__timelines.intro = tl;
+  </script>
+</template>

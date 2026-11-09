@@ -1,7 +1,12 @@
 # Remote Bob
 
 <p align="center">
-  <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExendtcTVyMmRhejk3MngzNTMxdnk1NWxkd3dhcnJzYnFhb3N3enl4dSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/V5Zao1FEKouvd4p2Wd/giphy.gif" alt="Remote Bob" width="480">
+  <a href="docs/media/remote-bob-slack-en.mp4">
+    <img src="docs/media/remote-bob-slack-en.gif" alt="Remote Bob in Slack - complete English tutorial (1:50)" width="960">
+  </a>
+</p>
+<p align="center">
+  <a href="docs/media/remote-bob-slack-en.mp4">Watch the MP4 with playback controls (1080p, 1:50)</a>
 </p>
 
 **Remote Bob** (`remote_bob`) runs **Bob Shell** (IBM) remotely in a container, with a
@@ -12,6 +17,25 @@
 > Bob Shell has **no** native server mode. This project wraps its headless
 > `bob run --accept-license --mode unrestricted-dev "<prompt>"` invocation and adds a
 > verify/retry loop on top (API version `1.4.0`).
+
+## Video: Remote Bob in Slack
+
+**[Watch the video (MP4, 1:50)](docs/media/remote-bob-slack-en.mp4)**
+· **[v1.0.4 release notes](https://github.com/BrUn3y/remote_bob/releases/tag/v1.0.4#video-remote-bob-in-slack)**
+· [Editable HyperFrames source and chapters](docs/video/slack-tour/README.md)
+
+An English-only visual walkthrough of app setup, messages without an @mention,
+thread context, images and documents, cancellation, recurring reports with
+explicit UTC times, and security. It also explains the difference between
+Slack's `/jobs` flow and the optional `/run` verification/retry API.
+
+The complete tutorial plays inline above as an animated GIF. Open the MP4
+for playback controls and full 1080p resolution.
+
+The video is a **labelled illustrative demo**, not a live Slack recording.
+All instructions appear on screen; no audio is required. Created with
+[HyperFrames](https://github.com/heygen-com/hyperframes), based on **v1.0.4**.
+For the full installation walkthrough, see [SLACK_SETUP.md](SLACK_SETUP.md).
 
 ## What's included
 

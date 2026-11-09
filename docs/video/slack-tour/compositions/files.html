@@ -1,0 +1,27 @@
+<template>
+  <style>#root { position: absolute; inset: 0; }</style>
+  <section id="root" class="scene" data-composition-id="files" data-width="1920" data-height="1080">
+    <header class="heading"><h1>Attach <span class="accent">images and documents</span></h1><p>Bob receives local file paths; attachments stay available in the thread</p></header>
+    <div class="slack">
+      <aside class="sidebar"><div class="workspace">Demo Team</div><div class="side-label">Channels</div><div class="side-channel"># development</div><div class="side-idle"># reports</div></aside>
+      <div class="channel">
+        <div class="channel-head">Thread <small># development</small></div>
+        <div class="conversation">
+          <div class="message"><div class="avatar">U</div><div><div class="author">You</div><p>Use these requirements to update the tests.</p><div id="files-attachment" class="attachment"><img src="assets/icons/file-text.svg" alt=""><div><strong>requirements.txt</strong><small>Example document</small></div></div></div></div>
+          <div id="files-answer" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP</small></div><p>I'll review the attached document<br>and use it alongside this thread's context.</p></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="files-limits" class="callout">Defaults: 25 MiB per file · 7 days · 512 MiB total</div>
+    <footer class="foot"><span>ILLUSTRATIVE DEMO · Configurable limits</span><span class="chapter">Work with attachments</span></footer>
+    <div class="bar"><span id="files-progress"></span></div>
+  </section>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#files-attachment", { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" }, 1.5);
+    tl.fromTo("#files-answer", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 4);
+    tl.fromTo("#files-limits", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 7.5);
+    tl.set("#files-progress", { scaleX: 5 / 9 }, 0);
+    window.__timelines.files = tl;
+  </script>
+</template>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[{"id":"brand","type":"string","label":"Project name","default":"Remote Bob"},{"id":"accent","type":"color","label":"Accent","default":"#117a66"}]'>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, height=1080">
+  <title>Remote Bob in Slack</title>
+  <link rel="stylesheet" href="assets/tour.css">
+  <script src="assets/gsap.min.js"></script>
+</head>
+<body>
+  <main id="root" data-composition-id="main" data-start="0" data-duration="110" data-width="1920" data-height="1080" data-fps="30">
+    <div id="intro" class="clip" data-composition-id="intro" data-composition-src="compositions/intro.html" data-start="0" data-duration="10" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+    <div id="setup" class="clip" data-composition-id="setup" data-composition-src="compositions/setup.html" data-start="10" data-duration="14" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+    <div id="prompt" class="clip" data-composition-id="prompt" data-composition-src="compositions/prompt.html" data-start="24" data-duration="13" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+    <div id="context" class="clip" data-composition-id="context" data-composition-src="compositions/context.html" data-start="37" data-duration="11" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+    <div id="files" class="clip" data-composition-id="files" data-composition-src="compositions/files.html" data-start="48" data-duration="13" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+    <div id="cancel" class="clip" data-composition-id="cancel" data-composition-src="compositions/cancel.html" data-start="61" data-duration="11" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+    <div id="schedule" class="clip" data-composition-id="schedule" data-composition-src="compositions/schedule.html" data-start="72" data-duration="15" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+    <div id="api" class="clip" data-composition-id="api" data-composition-src="compositions/api.html" data-start="87" data-duration="12" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+    <div id="safety" class="clip" data-composition-id="safety" data-composition-src="compositions/safety.html" data-start="99" data-duration="11" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  </main>
+  <script>
+    window.__timelines = window.__timelines || {};
+    window.__timelines.main = gsap.timeline({ paused: true });
+  </script>
+</body>
+</html>
