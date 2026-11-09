@@ -1,7 +1,7 @@
-# Workshop — Configurar Slack para el agente Bob (paso a paso)
+# Workshop — Configurar Slack para Remote Bob (paso a paso)
 
 Guía de taller **desde cero**: crear el **workspace** en Slack, crear la **app**
-del agente, obtener los **tokens** e **invitar a Bob** al canal. Enfocada **solo
+del agente, obtener los **tokens** e **invitar a Remote Bob** al canal. Enfocada **solo
 en dejar Slack configurado y listo**.
 
 ---
@@ -52,13 +52,13 @@ Socket Mode). En este repo está en `slack/manifest.yaml`.
 
    ```yaml
    display_information:
-     name: Bob
-     description: Talk to the Bob Shell harness from Slack — no @-mention needed.
+     name: Remote Bob
+     description: Run IBM Bob Shell remotely from Slack, with no @-mention needed.
      background_color: "#1f2937"
 
    features:
      bot_user:
-       display_name: Bob
+       display_name: remote_bob
        always_online: true
 
    oauth_config:
@@ -79,7 +79,7 @@ Socket Mode). En este repo está en `slack/manifest.yaml`.
 6. Clic en **"Next"** y luego **"Create"**.
 
 > **Qué acaba de configurar el manifest:**
-> - Un bot llamado **Bob**.
+> - Una app llamada **Remote Bob**, con nombre del bot **remote_bob**.
 > - Permisos (*scopes*): `chat:write` (responder) y `channels:history` (leer).
 > - El evento `message.channels` (Bob "escucha" mensajes nuevos).
 > - **Socket Mode activado** (por eso no hace falta URL pública).
@@ -131,13 +131,13 @@ Para obtener el **Channel ID** (empieza con `C...`):
 
 ---
 
-## Paso 5 — Invitar a Bob al canal
+## Paso 5 — Invitar a Remote Bob al canal
 
 Bob **solo ve mensajes en canales donde es miembro**. En el canal del taller
 (ej. `#bob-lab`) escribe:
 
 ```
-/invite @Bob
+/invite @remote_bob
 ```
 
 > Con los scopes del manifest, el bot funciona en **canales públicos**. Los

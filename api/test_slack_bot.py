@@ -261,7 +261,7 @@ def test_run_prompt_handles_unreachable_harness():
     err = urllib.error.URLError("connection refused")
     with patch.object(slack_bot.urllib.request, "urlopen", side_effect=err):
         out = slack_bot.run_prompt("x", harness_url="http://h:8080")
-    assert "Could not reach the harness" in out
+    assert "Could not reach Remote Bob" in out
 
 
 # --------------------------------------------------------------------------- #

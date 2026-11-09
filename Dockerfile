@@ -1,4 +1,4 @@
-# Bob Shell harness container.
+# Remote Bob container, powered by IBM Bob Shell.
 # Ubuntu is the friendliest base for a `curl | bash` installer: it ships the
 # certs + glibc that most IBM tooling expects, and apt makes deps trivial.
 FROM ubuntu:24.04

@@ -1,10 +1,10 @@
-# IBM Bob Harness
+# Remote Bob
 
 <p align="center">
-  <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExendtcTVyMmRhejk3MngzNTMxdnk1NWxkd3dhcnJzYnFhb3N3enl4dSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/V5Zao1FEKouvd4p2Wd/giphy.gif" alt="Bob Harness" width="480">
+  <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExendtcTVyMmRhejk3MngzNTMxdnk1NWxkd3dhcnJzYnFhb3N3enl4dSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/V5Zao1FEKouvd4p2Wd/giphy.gif" alt="Remote Bob" width="480">
 </p>
 
-A container that runs **Bob Shell** (IBM) autonomously, with a
+**Remote Bob** (`remote_bob`) runs **Bob Shell** (IBM) remotely in a container, with a
 **custom unrestricted mode**, a **REST API** to consume it programmatically, an
 **orchestration loop** that verifies results and retries until they pass, and a
 **bidirectional Slack bot**.
@@ -26,7 +26,9 @@ A container that runs **Bob Shell** (IBM) autonomously, with a
 | `api/server.py` | FastAPI app that shells out to `bob` (invoke / jobs / run / stream) |
 | `api/slack_bot.py` | Bidirectional Slack bot (Socket Mode) that manages cancellable `/jobs` |
 | `api/schedules.py` | Cron scheduler: persisted registry + root crontab generation |
+| `api/runtime_config.py` | Shared API URL configuration, including legacy compatibility |
 | `slack/manifest.yaml` | Slack App manifest (scopes + `message.channels` + Socket Mode) |
+| `httpie/remote_bob.openapi.json` / `remote_bob.postman_collection.json` | OpenAPI export and Postman collection |
 | `api/test_server.py` / `test_slack_bot.py` | Unit tests (mock `subprocess`/network, offline) |
 | `api/requirements.txt` / `requirements-dev.txt` | Runtime / test dependencies |
 | `.env` | Holds `BOBSHELL_API_KEY` + Slack tokens (**gitignored, never committed**) |
@@ -82,7 +84,12 @@ avoids placing an unused `/.bob/settings/settings.json` in the project config.
 
 ## How to start (quickstart)
 
-Get the container up in three steps. Requires Podman (or Docker) installed.
+Clone the project, then start the container. Requires Podman (or Docker) installed.
+
+```bash
+git clone https://github.com/BrUn3y/remote_bob.git
+cd remote_bob
+```
 
 ```bash
 # 1. Configure secrets: copy the template and fill in your keys.
@@ -122,11 +129,48 @@ podman compose up --build    # rebuild after editing code or .bob/ config
 
 ---
 
+## Migrating an existing installation
+
+The repository and Compose project are now named `remote_bob`; the image and
+container use that name too. The Compose service remains `bob`, so existing
+`podman compose logs -f bob` and `restart bob` commands still work.
+
+The previous repository URL, `https://github.com/BrUn3y/IBM_Bob_Harness`, still
+redirects to `remote_bob`, and its Git URL still works. Do not create a new
+repository at the previous path if you want to preserve that redirect.
+
+Before pulling the rename into an existing checkout, stop the old deployment
+with its existing Compose file so it releases port 8080:
+
+```bash
+podman compose down
+git remote set-url origin https://github.com/BrUn3y/remote_bob.git
+git pull --ff-only
+podman compose up --build -d
+```
+
+Keep the existing `.env` and `workspace/` directory in that checkout. The bind
+mount remains `./workspace:/workspace`, including attachments and
+`schedules.json`; this rename does not move or delete those files. A fresh
+clone uses a different `workspace/`, so transfer your data before starting it.
+
+`REMOTE_BOB_URL` is the preferred API URL setting. Existing `HARNESS_URL`
+settings remain supported when `REMOTE_BOB_URL` is unset or empty. IBM's `bob`
+command, `.bob/` configuration, `BOBSHELL_API_KEY`, API paths, job type
+`"harness"` and orchestration output markers remain unchanged for compatibility.
+
+The Slack manifest creates an app named **Remote Bob** with bot display name
+**remote_bob**. For an existing Slack app, update its app and bot display names
+in Slack's app settings; changing this repository does not rename an installed
+app or require new tokens.
+
+---
+
 ## 1. Configure the API key
 
 ### Get a Bob API key
 
-The harness authenticates Bob in headless mode with `BOBSHELL_API_KEY`. To
+Remote Bob authenticates Bob Shell in headless mode with `BOBSHELL_API_KEY`. To
 create one:
 
 1. Go to **[https://bob.ibm.com/](https://bob.ibm.com/)** and sign in with your IBMid.
@@ -389,7 +433,7 @@ container needs **no public URL**. By default the compose command is
 `serve-all`, which runs the REST API **and** the Slack bot in the **same
 container** — the bot calls the API over `http://localhost:8080`. (You can still
 run them apart: override the command to `serve` for API-only, or `slack` for a
-bot-only container that points at a remote API via `HARNESS_URL`.)
+bot-only container that points at a remote API via `REMOTE_BOB_URL`.)
 
 > **New to Slack apps?** Follow the beginner-friendly, click-by-click walkthrough
 > in **[`SLACK_SETUP.md`](SLACK_SETUP.md)** — it covers creating the app from the
@@ -407,7 +451,7 @@ bot-only container that points at a remote API via `HARNESS_URL`.)
    (`xoxb-...`) → `SLACK_BOT_TOKEN`.
 3. Under **Basic Information → App-Level Tokens**, generate a token with the
    `connections:write` scope and copy it (`xapp-...`) → `SLACK_APP_TOKEN`.
-4. **Invite the bot to your channel:** `/invite @Bob`.
+4. **Invite the bot to your channel:** `/invite @remote_bob`.
 
 ### 4.2 Configure and run
 
@@ -449,7 +493,8 @@ from Bob in-thread. To limit the bot to specific channels, set
 |---|---|---|
 | `SLACK_BOT_TOKEN` | — | **Required.** Bot token (`xoxb-...`) |
 | `SLACK_APP_TOKEN` | — | **Required.** App-level token for Socket Mode (`xapp-...`) |
-| `HARNESS_URL` | `http://localhost:8080` | REST API base URL (same container under `serve-all`; override for a remote API) |
+| `REMOTE_BOB_URL` | `http://localhost:8080` | REST API base URL (same container under `serve-all`; override for a remote API) |
+| `HARNESS_URL` | — | Legacy API URL fallback when `REMOTE_BOB_URL` is unset or empty |
 | `SLACK_ALLOWED_CHANNELS` | — | Optional CSV of channel IDs to restrict to |
 | `BOB_INVOKE_TIMEOUT` | `600` | Max seconds per Bob invocation |
 | `SLACK_UPLOAD_DIR` | `/workspace/slack_uploads` | Persistent directory for Slack attachments |
@@ -466,7 +511,7 @@ from Bob in-thread. To limit the bot to specific channels, set
 
 Bob is **stateless** — each `bob run` is a one-shot process — so recurring work
 needs a scheduler that *fires* Bob on a clock. That scheduler is the container's
-own **cron daemon**, managed through the harness API (no hand-editing crontabs).
+own **cron daemon**, managed through the Remote Bob API (no hand-editing crontabs).
 
 How it fits together:
 
@@ -474,7 +519,7 @@ How it fits together:
   (`/workspace/schedules.json`), so schedules **survive container recreation**.
 - Root's crontab is **regenerated from that registry** on every change and on
   API startup — never edited by hand.
-- Each schedule fires by curling the harness's own `POST /schedules/{id}/run`,
+- Each schedule fires by curling Remote Bob's own `POST /schedules/{id}/run`,
   which runs the stored prompt through the `/run` (verify+retry) machinery. So
   **cron needs none of Bob's environment**, and every scheduled run shows up in
   `/jobs` and `/workspace/cron.log`.
@@ -527,9 +572,9 @@ curl -s -X POST http://localhost:8080/schedules \
       }'
 ```
 
-Now every 5 minutes Bob posts a fresh joke to that channel. The harness uses the
+Now every 5 minutes Bob posts a fresh joke to that channel. Remote Bob uses the
 same `SLACK_BOT_TOKEN` as the bot (`chat:write`), so the bot must be a member of
-the target channel (`/invite @Bob`). Find a channel id in Slack via *View channel
+the target channel (`/invite @remote_bob`). Find a channel id in Slack via *View channel
 details* (bottom of the panel) or right-click → *Copy link* (the `C...` id is at
 the end of the URL). From Slack you can just ask Bob "post it here" — it's given
 the current channel id and will set `channel` for you.
@@ -578,7 +623,7 @@ completion after failures, and retaining active jobs under registry pressure.
 Run them inside the built image (which already has the runtime deps):
 
 ```bash
-podman run --rm -v "$PWD/api:/app:ro" -w /app --entrypoint bash bob-harness -lc \
+podman run --rm -v "$PWD/api:/app:ro" -w /app --entrypoint bash remote_bob -lc \
   'pip install -q --break-system-packages -r requirements-dev.txt && python3 -m pytest -v'
 ```
 
@@ -613,7 +658,8 @@ pytest -v
 | `SLACK_UPLOAD_CLEANUP_SECONDS` | `3600` | env | Background cleanup interval (`0` disables it) |
 | `SLACK_EVENT_TTL_SECONDS` | `3600` | env | Window for suppressing duplicate Slack events |
 | `SLACK_MAX_CONCURRENT` | `2` | env | Concurrent Slack-triggered Bob runs |
-| `HARNESS_URL` | `http://localhost:8080` | compose | REST API URL the Slack bot + cron call (same container under `serve-all`) |
+| `REMOTE_BOB_URL` | `http://localhost:8080` | env | REST API URL the Slack bot + cron call (same container under `serve-all`) |
+| `HARNESS_URL` | — | env | Legacy fallback when `REMOTE_BOB_URL` is unset or empty |
 | `BOB_SCHEDULES_FILE` | `/workspace/schedules.json` | env | Persisted schedule registry (survives restarts) |
 | `BOB_CRON_LOG` | `/workspace/cron.log` | env | Where each cron tick logs its curl output |
 

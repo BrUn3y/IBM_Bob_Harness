@@ -1,6 +1,6 @@
-# Slack Integration — Step-by-Step Guide (for first-timers)
+# Remote Bob Slack Integration — Step-by-Step Guide (for first-timers)
 
-This guide takes you **from zero** to having **Bob** answering inside a Slack
+This guide takes you **from zero** to having **Remote Bob** answering inside a Slack
 channel. No prior experience creating Slack apps is required: every step tells
 you exactly **where to click**, **what to copy**, and **where to paste it**.
 
@@ -59,13 +59,13 @@ slack/manifest.yaml
 
    ```yaml
    display_information:
-     name: Bob
-     description: Talk to the Bob Shell harness from Slack — no @-mention needed.
+     name: Remote Bob
+     description: Run IBM Bob Shell remotely from Slack, with no @-mention needed.
      background_color: "#1f2937"
 
    features:
      bot_user:
-       display_name: Bob
+       display_name: remote_bob
        always_online: true
 
    oauth_config:
@@ -90,8 +90,12 @@ slack/manifest.yaml
 > Token Scopes**, then click **Reinstall to Workspace** so the current bot token
 > receives the new permission.
 
+> Renaming an existing app? Set its app display name to **Remote Bob** and bot
+> display name to **remote_bob** in Slack's app settings. Editing this manifest
+> does not rename an installed app automatically; keep using your existing tokens.
+
 > **What did the manifest just configure?**
-> - A bot named **Bob**.
+> - An app named **Remote Bob**, with bot display name **remote_bob**.
 > - Permissions (*scopes*): `chat:write` (reply), `channels:history` (read), and
 >   `files:read` (download user attachments).
 > - The `message.channels` event (Bob "listens" for new messages).
@@ -174,7 +178,8 @@ Advanced variables (leave them as-is unless you know what you're doing):
 | `SLACK_THINKING_INTERVAL` | `5` | Seconds between each rotation of the *"Bob is thinking…"* placeholder while it works |
 | `SLACK_WORKDIR` | `/` | Working directory Bob runs with when triggered from Slack |
 | `BOB_INVOKE_TIMEOUT` | `600` | Maximum seconds per Bob run |
-| `HARNESS_URL` | `http://localhost:8080` | Which API the bot talks to (only change it if you run the bot in a separate container) |
+| `REMOTE_BOB_URL` | `http://localhost:8080` | Which API the bot talks to (only change it if you run the bot in a separate container) |
+| `HARNESS_URL` | — | Legacy fallback when `REMOTE_BOB_URL` is unset or empty |
 | `SLACK_UPLOAD_DIR` | `/workspace/slack_uploads` | Where incoming images and documents are saved |
 | `SLACK_MAX_FILE_BYTES` | `26214400` | Maximum bytes downloaded per attachment (25 MiB) |
 | `SLACK_UPLOAD_TTL_SECONDS` | `604800` | How long attachments remain available (7 days; `0` disables expiry) |
@@ -204,13 +209,13 @@ SLACK_DEFAULT_CHANNEL=
 
 ---
 
-## Step 6 — Invite Bob to the channel
+## Step 6 — Invite Remote Bob to the channel
 
 Bob **only sees messages in channels where it's a member**. In the Slack channel
 where you want to use it, type:
 
 ```
-/invite @Bob
+/invite @remote_bob
 ```
 
 > Note: with the manifest's scopes, the bot works in **public channels**. (Private
@@ -236,8 +241,8 @@ podman compose logs -f bob
 In the logs, the **success signal** is seeing something like:
 
 ```
-Bob harness: starting REST API + Slack bot in one container
-Bob Slack bot: connecting via Socket Mode (harness=http://localhost:8080)
+Remote Bob: starting REST API + Slack bot in one container
+Remote Bob Slack bot: connecting via Socket Mode (api=http://localhost:8080)
 INFO slack_bolt.App: A new session has been established
 INFO slack_bolt.App: Starting to receive messages from a new connection
 ```
@@ -270,12 +275,12 @@ acknowledges the request, and replaces the pending response with the final
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| The bot **doesn't reply** in the channel | You didn't invite it | Type `/invite @Bob` in that channel |
+| The bot **doesn't reply** in the channel | You didn't invite it | Type `/invite @remote_bob` in that channel |
 | No reply, and channels are configured | The channel isn't in `SLACK_ALLOWED_CHANNELS` | Add its ID, or leave the variable empty for all |
 | Log: `invalid_auth` / `not_authed` | `SLACK_BOT_TOKEN` mis-copied or revoked | Reinstall the app (Step 2) and re-copy the `xoxb-` |
 | The bot **won't connect** (no "session established") | Missing `xapp-`, or it lacks `connections:write` | Regenerate the App-Level Token (Step 3) |
 | Startup error: `SLACK_APP_TOKEN is not set` | A variable is missing in `.env` | Ensure both `SLACK_BOT_TOKEN` **and** `SLACK_APP_TOKEN` are filled |
-| Log: `not_in_channel` when replying | The bot isn't a member of the channel | `/invite @Bob` |
+| Log: `not_in_channel` when replying | The bot isn't a member of the channel | `/invite @remote_bob` |
 | Bob cannot download an attachment | The app lacks `files:read` | Add the scope under **OAuth & Permissions**, then reinstall the app |
 | Bob says it is busy | The configured concurrency limit is active | Wait for a running request to finish or raise `SLACK_MAX_CONCURRENT` |
 | Bob says there is no active job | The cancel command was posted outside the task's thread, or the task already ended | Post `cancel` as a reply inside the running task's thread |
@@ -303,4 +308,4 @@ channel can ask Bob to execute things.** So, in real environments:
 - Socket Mode (docs): **https://api.slack.com/apis/socket-mode**
 - App-Level Tokens (docs): **https://api.slack.com/authentication/token-types#app-level**
 - This project's manifest: [`slack/manifest.yaml`](slack/manifest.yaml)
-- General harness documentation: [`README.md`](README.md)
+- General Remote Bob documentation: [`README.md`](README.md)
