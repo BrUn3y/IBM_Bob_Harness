@@ -1,4 +1,4 @@
-"""Cron-based scheduler for the Bob harness.
+"""Cron-based scheduler for Remote Bob.
 
 Bob Shell is stateless — each `bob -p` is a one-shot process, so recurring work
 needs a scheduler that *fires* Bob on a clock. That scheduler is the container's
@@ -32,12 +32,14 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+from runtime_config import api_url
+
 # Persisted on the mounted volume so schedules outlive the container.
 SCHEDULES_FILE = os.environ.get("BOB_SCHEDULES_FILE", "/workspace/schedules.json")
 # Where each cron invocation's curl output is appended (handy for debugging).
 CRON_LOG = os.environ.get("BOB_CRON_LOG", "/workspace/cron.log")
-# The harness base URL cron curls. Same container, so localhost by default.
-HARNESS_URL = os.environ.get("HARNESS_URL", "http://localhost:8080")
+# Keep the internal name stable; both current and legacy env vars are accepted.
+HARNESS_URL = api_url()
 
 # Serializes read-modify-write of the JSON registry + crontab install.
 _lock = threading.RLock()
@@ -111,7 +113,7 @@ def crontab_body(schedules: list[dict]) -> str:
     """Render the full root crontab from the registry (enabled schedules only)."""
     lines = [
         "# ===================================================================",
-        "# Managed by the Bob harness scheduler — DO NOT EDIT BY HAND.",
+        "# Managed by the Remote Bob scheduler — DO NOT EDIT BY HAND.",
         "# Source of truth: " + SCHEDULES_FILE,
         "# Regenerated on every /schedules change and on API startup.",
         "# ===================================================================",

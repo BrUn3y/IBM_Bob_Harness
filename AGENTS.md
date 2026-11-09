@@ -1,8 +1,8 @@
-# Repository Guidelines
+# Remote Bob Repository Guidelines
 
 ## Project Structure & Module Organization
 
-The harness is a Python FastAPI service packaged as one container. Core code lives in `api/`: `server.py` exposes REST, job, streaming, and orchestration endpoints; `schedules.py` manages cron-backed runs; and `slack_bot.py` connects Slack Socket Mode to the API. Matching `test_*.py` files sit beside each module. Container startup is defined by `Dockerfile`, `docker-compose.yml`, and `entrypoint.sh`. Bob runtime policy lives under `.bob/`. Keep API examples in `httpie/`, Slack configuration in `slack/`, and user-created persistent data in the gitignored `workspace/` volume.
+Remote Bob (`remote_bob`) is a Python FastAPI service packaged as one container. Core code lives in `api/`: `server.py` exposes REST, job, streaming, and orchestration endpoints; `schedules.py` manages cron-backed runs; and `slack_bot.py` connects Slack Socket Mode to the API. Matching `test_*.py` files sit beside each module. Container startup is defined by `Dockerfile`, `docker-compose.yml`, and `entrypoint.sh`. Bob runtime policy lives under `.bob/`. Keep API examples in `httpie/`, Slack configuration in `slack/`, and user-created persistent data in the gitignored `workspace/` volume.
 
 ## Build, Test, and Development Commands
 

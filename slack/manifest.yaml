@@ -1,4 +1,4 @@
-# Slack App manifest for the Bob harness bot.
+# Slack App manifest for Remote Bob.
 #
 # Use this to create the app in one step:
 #   1. Go to https://api.slack.com/apps  ->  "Create New App"  ->  "From a manifest"
@@ -7,17 +7,17 @@
 #   4. Copy the Bot User OAuth Token (xoxb-...) into SLACK_BOT_TOKEN.
 #   5. Under "Basic Information" -> "App-Level Tokens", generate a token with the
 #      connections:write scope and copy it (xapp-...) into SLACK_APP_TOKEN.
-#   6. Invite the bot to your channel:  /invite @Bob
+#   6. Invite the bot to your channel:  /invite @remote_bob
 #
 # Socket Mode is enabled below, so no public request URL is required.
 display_information:
-  name: Bob
-  description: Talk to the Bob Shell harness from Slack — no @-mention needed.
+  name: Remote Bob
+  description: Run IBM Bob Shell remotely from Slack, with no @-mention needed.
   background_color: "#1f2937"
 
 features:
   bot_user:
-    display_name: Bob
+    display_name: remote_bob
     always_online: true
 
 oauth_config:

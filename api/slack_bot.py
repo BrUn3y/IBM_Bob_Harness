@@ -1,4 +1,4 @@
-"""Bidirectional Slack bot for the Bob Shell harness.
+"""Bidirectional Slack bot for Remote Bob, powered by IBM Bob Shell.
 
 This is the conversational counterpart to the REST API in `server.py`. It runs
 as a separate process (see the `slack-bot` service in docker-compose.yml) and
@@ -25,7 +25,8 @@ without a live Slack connection — see test_slack_bot.py.
 Configuration (env):
   SLACK_BOT_TOKEN        xoxb-... — bot token (needs chat:write, channels:history)
   SLACK_APP_TOKEN        xapp-... — app-level token for Socket Mode (connections:write)
-  HARNESS_URL            Base URL of the REST harness (default http://localhost:8080)
+  REMOTE_BOB_URL         Base API URL (default http://localhost:8080)
+  HARNESS_URL            Legacy fallback when REMOTE_BOB_URL is unset or empty
   SLACK_ALLOWED_CHANNELS Optional CSV of channel IDs to restrict to (empty = all)
   BOB_MODE               Custom mode slug forwarded to /invoke (optional)
   SLACK_WORKDIR          Bob's starting dir (default "/" = whole container)
@@ -52,6 +53,8 @@ import time
 import urllib.error
 import urllib.request
 from typing import Optional
+
+from runtime_config import api_url
 
 # Keep each Slack message comfortably below its recommended 4,000-character
 # size. Longer answers are continued in the same thread instead of discarded.
@@ -396,11 +399,11 @@ def run_prompt(
             body = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", "replace")
-        return f":x: Harness error (HTTP {exc.code}): {detail[:800]}"
+        return f":x: Remote Bob API error (HTTP {exc.code}): {detail[:800]}"
     except urllib.error.URLError as exc:
-        return f":x: Could not reach the harness at {harness_url}: {exc.reason}"
+        return f":x: Could not reach Remote Bob at {harness_url}: {exc.reason}"
     except (TimeoutError, OSError) as exc:
-        return f":x: Request to the harness failed: {exc}"
+        return f":x: Request to Remote Bob failed: {exc}"
 
     output = (body.get("output") or "").strip()
     if not body.get("ok", False):
@@ -435,14 +438,14 @@ def start_job(
             body = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", "replace")
-        return None, f":x: Harness error (HTTP {exc.code}): {detail[:800]}"
+        return None, f":x: Remote Bob API error (HTTP {exc.code}): {detail[:800]}"
     except urllib.error.URLError as exc:
-        return None, f":x: Could not reach the harness at {harness_url}: {exc.reason}"
+        return None, f":x: Could not reach Remote Bob at {harness_url}: {exc.reason}"
     except (TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
         return None, f":x: Could not start Bob job: {exc}"
     job_id = body.get("id")
     if not job_id:
-        return None, ":x: Harness did not return a job id."
+        return None, ":x: Remote Bob did not return a job id."
     return str(job_id), ""
 
 
@@ -462,9 +465,9 @@ def wait_for_job(
                 body = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", "replace")
-            return f":x: Harness error (HTTP {exc.code}): {detail[:800]}"
+            return f":x: Remote Bob API error (HTTP {exc.code}): {detail[:800]}"
         except urllib.error.URLError as exc:
-            return f":x: Could not reach the harness at {harness_url}: {exc.reason}"
+            return f":x: Could not reach Remote Bob at {harness_url}: {exc.reason}"
         except (TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
             return f":x: Could not read Bob job status: {exc}"
 
@@ -494,7 +497,7 @@ def cancel_job(job_id: str, *, harness_url: str) -> tuple[bool, str]:
         detail = exc.read().decode("utf-8", "replace")
         return False, f":x: Cancellation failed (HTTP {exc.code}): {detail[:800]}"
     except urllib.error.URLError as exc:
-        return False, f":x: Could not reach the harness: {exc.reason}"
+        return False, f":x: Could not reach Remote Bob: {exc.reason}"
     except (TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
         return False, f":x: Cancellation failed: {exc}"
     if body.get("cancel_requested"):
@@ -789,7 +792,7 @@ def create_app():
         request_verification_enabled=False,
     )
 
-    harness_url = os.environ.get("HARNESS_URL", "http://localhost:8080")
+    harness_url = api_url()
     mode = os.environ.get("BOB_MODE") or None
     # Start Bob at "/" so its file tools can reach the whole container (its shell
     # already could). Override with SLACK_WORKDIR to scope it back (e.g. /workspace).
@@ -999,8 +1002,8 @@ def main() -> None:
 
     app = create_app()
     print(
-        "Bob Slack bot: connecting via Socket Mode "
-        f"(harness={os.environ.get('HARNESS_URL', 'http://localhost:8080')})"
+        "Remote Bob Slack bot: connecting via Socket Mode "
+        f"(api={api_url()})"
     )
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
 
