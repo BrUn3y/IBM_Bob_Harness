@@ -1,0 +1,12 @@
+{
+  "name": "slack-tour",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.9.26 preview",
+    "check": "npx --yes hyperframes@0.9.26 check",
+    "render": "npx --yes hyperframes@0.9.26 render",
+    "publish": "npx --yes hyperframes@0.9.26 publish",
+    "verify": "node verify-video.mjs"
+  }
+}

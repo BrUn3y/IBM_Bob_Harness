@@ -1,0 +1,27 @@
+<template>
+  <style>#root { position: absolute; inset: 0; }</style>
+  <section id="root" class="scene" data-composition-id="files" data-width="1920" data-height="1080">
+    <header class="heading"><h1>Añade <span class="accent">imágenes y documentos</span></h1><p>Bob recibe rutas locales; los adjuntos siguen disponibles en el hilo</p></header>
+    <div class="slack">
+      <aside class="sidebar"><div class="workspace">Equipo Demo</div><div class="side-label">Canales</div><div class="side-channel"># desarrollo</div><div class="side-idle"># reportes</div></aside>
+      <div class="channel">
+        <div class="channel-head">Hilo <small># desarrollo</small></div>
+        <div class="conversation">
+          <div class="message"><div class="avatar">TÚ</div><div><div class="author">Tú</div><p>Usa estos requisitos para ajustar las pruebas.</p><div id="files-attachment" class="attachment"><img src="assets/icons/file-text.svg" alt=""><div><strong>requisitos.txt</strong><small>Documento de ejemplo</small></div></div></div></div>
+          <div id="files-answer" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP</small></div><p>Revisaré el documento adjunto<br>y lo usaré junto con el contexto de este hilo.</p></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="files-limits" class="callout">Por defecto: 25 MiB por archivo · 7 días · 512 MiB en total</div>
+    <footer class="foot"><span>DEMO ILUSTRATIVA · Límites configurables</span><span class="chapter">Trabajar con adjuntos</span></footer>
+    <div class="bar"><span id="files-progress"></span></div>
+  </section>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#files-attachment", { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.45, ease: "power3.out" }, 1.5);
+    tl.fromTo("#files-answer", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 4);
+    tl.fromTo("#files-limits", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 7.5);
+    tl.set("#files-progress", { scaleX: 5 / 9 }, 0);
+    window.__timelines.files = tl;
+  </script>
+</template>

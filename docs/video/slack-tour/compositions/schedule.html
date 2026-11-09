@@ -1,0 +1,28 @@
+<template>
+  <style>#root { position: absolute; inset: 0; }</style>
+  <section id="root" class="scene" data-composition-id="schedule" data-width="1920" data-height="1080">
+    <header class="heading"><h1>Pide un <span class="accent">reporte recurrente</span></h1><p>Indica la tarea, la hora UTC y el canal donde quieres el resultado</p></header>
+    <div class="slack">
+      <aside class="sidebar"><div class="workspace">Equipo Demo</div><div class="side-label">Canales</div><div class="side-channel"># desarrollo</div><div class="side-idle"># reportes</div></aside>
+      <div class="channel">
+        <div class="channel-head"># desarrollo</div>
+        <div class="conversation">
+          <div class="message"><div class="avatar">TÚ</div><div><div class="author">Tú</div><p>Cada día a las 14:00 UTC revisa <code>/workspace</code><br>y publica el resumen aquí.</p></div></div>
+          <div id="schedule-confirm" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP · Ejemplo de confirmación</small></div><p>Programación: <code>0 14 * * *</code> · Todos los días, 14:00 UTC<br>ID de ejemplo: <code>a1b2c3d4e5f6</code> · Entrega en este canal</p></div></div>
+          <div id="schedule-result" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>Ejemplo de reporte posterior</small></div><p class="result">Resumen de /workspace: cambios y próximos pasos.</p></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="schedule-note" class="callout">Cada ejecución usa un prompt autónomo, sin historial del chat.</div>
+    <footer class="foot"><span>DEMO ILUSTRATIVA · No se ha creado ninguna programación</span><span class="chapter">Automatizar reportes</span></footer>
+    <div class="bar"><span id="schedule-progress"></span></div>
+  </section>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#schedule-confirm", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 3);
+    tl.fromTo("#schedule-result", { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.45, ease: "power4.out" }, 7);
+    tl.fromTo("#schedule-note", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 10);
+    tl.set("#schedule-progress", { scaleX: 7 / 9 }, 0);
+    window.__timelines.schedule = tl;
+  </script>
+</template>

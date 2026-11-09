@@ -1,0 +1,74 @@
+@font-face {
+  font-family: "Tour Sans";
+  src: url("fonts/Inter-Latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: block;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; letter-spacing: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: #ffffff; }
+body { font-family: "Tour Sans", Arial, sans-serif; color: #1d1c1d; }
+.scene { position: absolute; inset: 0; background: #ffffff; }
+.heading { position: absolute; top: 75px; left: 120px; right: 120px; }
+.heading h1 { font-size: 68px; line-height: 1.12; font-weight: 800; }
+.heading p { margin-top: 15px; font-size: 32px; line-height: 1.4; color: #515154; }
+.accent { color: var(--accent, #117a66); }
+.foot { position: absolute; bottom: 61px; left: 120px; right: 120px; display: flex; justify-content: space-between; align-items: center; gap: 24px; font-size: 26px; color: #525256; }
+.foot .chapter { color: #117a66; font-weight: 700; }
+.bar { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: #ededed; }
+.bar > span { display: block; height: 100%; width: 100%; background: #117a66; transform-origin: left; }
+.slack { position: absolute; left: 120px; right: 120px; top: 270px; height: 610px; display: grid; grid-template-columns: 280px 1fr; border: 1px solid #c8c8ca; border-radius: 8px; overflow: hidden; background: #ffffff; }
+.sidebar { background: #3f0e40; padding: 34px 26px; color: #ffffff; }
+.workspace { font-size: 29px; font-weight: 800; padding-bottom: 40px; }
+.side-label { font-size: 26px; color: #e4d8e5; margin-bottom: 18px; }
+.side-channel { margin: 0 -26px; padding: 13px 26px; font-size: 28px; background: #1164a3; color: #ffffff; }
+.side-idle { font-size: 27px; margin-top: 20px; color: #e4d8e5; }
+.channel { min-width: 0; position: relative; }
+.channel-head { height: 83px; display: flex; align-items: center; padding: 0 34px; border-bottom: 1px solid #dedee0; font-size: 32px; font-weight: 800; }
+.channel-head small { font-size: 24px; font-weight: 500; color: #59595c; margin-left: auto; }
+.conversation { padding: 27px 34px; }
+.message { display: grid; grid-template-columns: 52px 1fr; column-gap: 18px; margin-bottom: 28px; }
+.avatar { width: 52px; height: 52px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 25px; font-weight: 800; background: #e9c45b; color: #352600; }
+.avatar.bob { color: #ffffff; background: #117a66; font-size: 22px; }
+.author { font-size: 27px; font-weight: 800; margin-bottom: 8px; }
+.author small { font-size: 21px; font-weight: 500; color: #646467; margin-left: 13px; }
+.message p { font-size: 30px; line-height: 1.45; }
+.message code, .note code { font-family: "Tour Sans", sans-serif; background: #f1f1f2; border: 1px solid #e2e2e4; padding: 2px 7px; border-radius: 3px; color: #a72745; font-size: 28px; }
+.thread-link { color: #1164a3; margin: 10px 0 0 70px; font-size: 25px; font-weight: 700; }
+.thinking { color: #666669; font-style: italic; }
+.composer { position: absolute; bottom: 24px; left: 34px; right: 34px; border: 1px solid #86868a; border-radius: 7px; padding: 18px 22px; font-size: 27px; color: #636368; background: #ffffff; }
+.composer .send { position: absolute; right: 16px; top: 10px; width: 48px; height: 48px; background: #117a66; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #ffffff; }
+.composer .send img { width: 29px; height: 29px; }
+.callout { position: absolute; left: 400px; right: 120px; top: 890px; height: 60px; background: #ecf7f3; border-top: 2px solid #117a66; display: flex; align-items: center; padding: 0 35px; font-size: 29px; color: #125744; font-weight: 600; }
+.terminal { background: #202124; color: #f6f6f7; border-radius: 8px; overflow: hidden; }
+.terminal-title { background: #303136; padding: 19px 28px; font-size: 25px; color: #dedee2; }
+.terminal pre { padding: 27px 32px; font-family: "Tour Sans", sans-serif; font-size: 29px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.terminal .green { color: #9be2c3; }
+.terminal .muted { color: #b6bac2; }
+.setup-layout { position: absolute; top: 280px; left: 120px; right: 120px; display: grid; grid-template-columns: 900px 1fr; gap: 60px; }
+.setup-right { padding-top: 20px; }
+.setup-right h2 { font-size: 37px; line-height: 1.3; margin-bottom: 25px; }
+.setup-right p { font-size: 30px; line-height: 1.6; margin-top: 22px; }
+.invite { padding: 23px 25px; border: 2px solid #117a66; border-radius: 6px; font-size: 33px; font-weight: 650; background: #f0f9f6; color: #125744; }
+.setup-bottom { position: absolute; left: 120px; right: 120px; top: 815px; font-size: 31px; line-height: 1.5; }
+.attachment { display: flex; align-items: center; gap: 20px; border: 1px solid #cbcbcf; border-radius: 6px; width: 600px; padding: 17px 20px; margin-top: 14px; background: #fcfcfc; }
+.attachment img { height: 47px; width: 47px; }
+.attachment strong { font-size: 28px; }
+.attachment small { display: block; color: #5e5e62; font-size: 24px; margin-top: 6px; }
+.note { font-size: 30px; line-height: 1.5; }
+.command { color: #a72745; font-size: 38px; font-weight: 750; }
+.result { color: #117a66; font-weight: 700; }
+.api-layout { position: absolute; top: 284px; left: 120px; right: 120px; }
+.api-flow { display: flex; align-items: center; gap: 35px; padding-bottom: 27px; margin-bottom: 28px; border-bottom: 1px solid #d5d5d8; }
+.api-flow strong { font-size: 39px; }
+.api-flow span { font-size: 31px; color: #515154; }
+.api-flow img { width: 40px; height: 40px; }
+.api-layout .terminal { width: 1680px; }
+.api-layout .terminal pre { font-size: 29px; line-height: 1.6; }
+.api-proof { display: flex; align-items: center; gap: 35px; margin-top: 28px; font-size: 31px; color: #125744; }
+.api-proof img { width: 34px; height: 34px; }
+.safety-layout { position: absolute; top: 280px; left: 120px; right: 120px; }
+.safety-row { padding: 25px 0; display: flex; gap: 27px; align-items: center; border-bottom: 1px solid #dedee0; }
+.safety-row img { width: 44px; height: 44px; flex-shrink: 0; }
+.safety-row p { font-size: 32px; line-height: 1.5; }
+.safety-row strong { font-weight: 800; }
+.closing { margin-top: 45px; font-size: 43px; font-weight: 800; color: #117a66; }

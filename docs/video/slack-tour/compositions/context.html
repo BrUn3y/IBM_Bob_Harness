@@ -1,0 +1,27 @@
+<template>
+  <style>#root { position: absolute; inset: 0; }</style>
+  <section id="root" class="scene" data-composition-id="context" data-width="1920" data-height="1080">
+    <header class="heading"><h1>Continúa <span class="accent">en el mismo hilo</span></h1><p>Los mensajes anteriores del hilo vuelven a Bob como contexto</p></header>
+    <div class="slack">
+      <aside class="sidebar"><div class="workspace">Equipo Demo</div><div class="side-label">Canales</div><div class="side-channel"># desarrollo</div><div class="side-idle"># reportes</div></aside>
+      <div class="channel">
+        <div class="channel-head">Hilo <small># desarrollo</small></div>
+        <div class="conversation">
+          <div class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>Respuesta anterior</small></div><p>Propongo validar las entradas vacías.</p></div></div>
+          <div id="context-followup" class="message"><div class="avatar">TÚ</div><div><div class="author">Tú</div><p>Ahora agrega pruebas para ese cambio.</p></div></div>
+          <div id="context-answer" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP</small></div><p>Voy a cubrir la entrada vacía y el caso válido<br>sobre el mismo archivo que acabamos de revisar.</p></div></div>
+        </div>
+        <div class="composer">Responder en el hilo<div class="send"><img src="assets/icons/send.svg" alt=""></div></div>
+      </div>
+    </div>
+    <footer class="foot"><span>DEMO ILUSTRATIVA · No es memoria global entre canales</span><span class="chapter">Contexto por hilo</span></footer>
+    <div class="bar"><span id="context-progress"></span></div>
+  </section>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#context-followup", { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.45, ease: "power4.out" }, 1);
+    tl.fromTo("#context-answer", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 4.5);
+    tl.set("#context-progress", { scaleX: 4 / 9 }, 0);
+    window.__timelines.context = tl;
+  </script>
+</template>

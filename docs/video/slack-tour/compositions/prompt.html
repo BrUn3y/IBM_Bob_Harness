@@ -1,0 +1,31 @@
+<template>
+  <style>#root { position: absolute; inset: 0; }</style>
+  <section id="root" class="scene" data-composition-id="prompt" data-width="1920" data-height="1080">
+    <header class="heading"><h1>Escribe tu tarea. <span class="accent">Sin @mención.</span></h1><p>Bob responde a mensajes humanos en los canales donde está invitado</p></header>
+    <div class="slack">
+      <aside class="sidebar"><div class="workspace">Equipo Demo</div><div class="side-label">Canales</div><div class="side-channel"># desarrollo</div><div class="side-idle"># reportes</div></aside>
+      <div class="channel">
+        <div class="channel-head"># desarrollo</div>
+        <div class="conversation">
+          <div class="message"><div class="avatar">TÚ</div><div><div class="author">Tú</div><p>Revisa <code>/workspace/app.py</code> y propone una mejora.</p></div></div>
+          <div id="prompt-thinking" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP · Hilo</small></div><p class="thinking">Bob is thinking…</p></div></div>
+          <div id="prompt-answer" class="message"><div class="avatar bob">RB</div><div><div class="author">remote_bob <small>APP · Hilo</small></div><p>Falta validar las entradas vacías.<br>Propongo devolver un error claro antes de procesarlas.</p></div></div>
+        </div>
+        <div class="composer">Mensaje a #desarrollo<div class="send"><img src="assets/icons/send.svg" alt=""></div></div>
+      </div>
+    </div>
+    <div id="prompt-note" class="callout">El indicador de trabajo se actualiza mientras esperas.</div>
+    <footer class="foot"><span>DEMO ILUSTRATIVA · Resultado de ejemplo</span><span class="chapter">Pedir una tarea</span></footer>
+    <div class="bar"><span id="prompt-progress"></span></div>
+  </section>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#prompt-thinking", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 1);
+    tl.to("#prompt-thinking", { opacity: 0, duration: 0.15 }, 4.8);
+    tl.set("#prompt-thinking", { height: 0, marginBottom: 0, overflow: "hidden" }, 5);
+    tl.fromTo("#prompt-answer", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 5);
+    tl.fromTo("#prompt-note", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 8);
+    tl.set("#prompt-progress", { scaleX: 3 / 9 }, 0);
+    window.__timelines.prompt = tl;
+  </script>
+</template>

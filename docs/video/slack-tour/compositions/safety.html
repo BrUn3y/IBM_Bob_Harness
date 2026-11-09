@@ -1,0 +1,22 @@
+<template>
+  <style>#root { position: absolute; inset: 0; }</style>
+  <section id="root" class="scene" data-composition-id="safety" data-width="1920" data-height="1080">
+    <header class="heading"><h1>Antes de usarlo: <span class="accent">canales de confianza</span></h1><p>unrestricted-dev + YOLO permite ejecutar comandos en el contenedor</p></header>
+    <div class="safety-layout">
+      <div class="safety-row"><img src="assets/icons/shield-check.svg" alt=""><p><strong>Restringe los canales.</strong> Configura SLACK_ALLOWED_CHANNELS.</p></div>
+      <div id="safety-local" class="safety-row"><img src="assets/icons/lock-keyhole.svg" alt=""><p><strong>Mantén la API en localhost.</strong> Todavía no tiene autenticación.</p></div>
+      <div id="safety-volume" class="safety-row"><img src="assets/icons/folder.svg" alt=""><p><strong>Conserva los archivos en /workspace.</strong><br>Es el volumen persistente; no montes datos sensibles.</p></div>
+      <p id="safety-close" class="closing">Empieza con una tarea concreta en tu canal.</p>
+    </div>
+    <footer class="foot"><span>Remote Bob v1.0.4 · Guía basada en el código · 2026-11-09</span><span class="chapter">README · SLACK_SETUP.md</span></footer>
+    <div class="bar"><span id="safety-progress"></span></div>
+  </section>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#safety-local", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.5);
+    tl.fromTo("#safety-volume", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 3);
+    tl.fromTo("#safety-close", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 6);
+    tl.set("#safety-progress", { scaleX: 1 }, 0);
+    window.__timelines.safety = tl;
+  </script>
+</template>

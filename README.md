@@ -13,6 +13,24 @@
 > `bob run --accept-license --mode unrestricted-dev "<prompt>"` invocation and adds a
 > verify/retry loop on top (API version `1.4.0`).
 
+## Video: Remote Bob en Slack
+
+[![Remote Bob en Slack: animated preview of the Spanish visual tutorial](docs/media/remote-bob-slack-es-preview.gif)](docs/media/remote-bob-slack-es.mp4)
+
+**[Watch the video / Ver el video (MP4, 1:50)](docs/media/remote-bob-slack-es.mp4)**
+· **[v1.0.4 release notes](https://github.com/BrUn3y/remote_bob/releases/tag/v1.0.4#video-remote-bob-en-slack)**
+· [Editable HyperFrames source and chapters](docs/video/slack-tour/README.md)
+
+A Spanish visual walkthrough of app setup, messages without an @mention,
+thread context, images and documents, cancellation, recurring reports with
+explicit UTC times, and security. It also explains the difference between
+Slack's `/jobs` flow and the optional `/run` verification/retry API.
+
+The video is a **labelled illustrative demo**, not a live Slack recording.
+All instructions appear on screen; no audio is required. Created with
+[HyperFrames](https://github.com/heygen-com/hyperframes), based on **v1.0.4**.
+For the full installation walkthrough, see [SLACK_SETUP.md](SLACK_SETUP.md).
+
 ## What's included
 
 | File | Role |

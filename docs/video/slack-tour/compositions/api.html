@@ -1,0 +1,27 @@
+<template>
+  <style>#root { position: absolute; inset: 0; }</style>
+  <section id="root" class="scene" data-composition-id="api" data-width="1920" data-height="1080">
+    <header class="heading"><h1>Chat y verificación: <span class="accent">dos flujos</span></h1><p>El chat usa /jobs. Los checks y reintentos se configuran con /run.</p></header>
+    <div class="api-layout">
+      <div class="api-flow"><strong>Mensaje en Slack</strong><img src="assets/icons/arrow-right.svg" alt=""><strong>POST /jobs</strong><span>Respuesta final en el hilo</span></div>
+      <div id="api-command" class="terminal">
+        <div class="terminal-title">API · Ejemplo opcional de verificación</div>
+        <pre>curl -X POST http://localhost:8080/run \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"Agrega pruebas en /workspace",
+       "workdir":"/workspace",
+       "check":"pytest -q", "max_attempts":3}'</pre>
+      </div>
+      <div id="api-verify" class="api-proof"><strong>Ejecutar</strong><img src="assets/icons/arrow-right.svg" alt=""><strong>Verificar</strong><img src="assets/icons/arrow-right.svg" alt=""><strong>Reintentar si falla</strong><span>Hasta el límite indicado</span></div>
+    </div>
+    <footer class="foot"><span>DEMO ILUSTRATIVA · Jobs, estados y SSE también por REST</span><span class="chapter">Verificación opcional</span></footer>
+    <div class="bar"><span id="api-progress"></span></div>
+  </section>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#api-command", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.5);
+    tl.fromTo("#api-verify", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 6);
+    tl.set("#api-progress", { scaleX: 8 / 9 }, 0);
+    window.__timelines.api = tl;
+  </script>
+</template>
