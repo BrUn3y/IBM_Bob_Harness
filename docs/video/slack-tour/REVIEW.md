@@ -61,7 +61,12 @@ runtime Python files changed. Audio was neither generated nor listened to.
   was 0.0583 (the empty-frame threshold is 0.002).
 - A contact sheet decoded from the final MP4 was visually inspected at 6,
   20, 32, 44, 57, 68, 83, 95 and 107 seconds.
-- English README preview: 9-second GIF, 95,700 bytes. Poster: JPEG at 1280 x 720.
+- Short English release preview: 9-second GIF, 95,700 bytes.
+  Poster: JPEG at 1280 x 720.
+- Complete inline README animation: GIF, 960 x 540, 880 frames at 8 fps,
+  110.01 seconds (GIF delay rounding), 975,725 bytes. All nine chapters were
+  checked in decoded frames. The animation links to the original MP4 for
+  playback controls and 1080p resolution.
 - MP4 SHA-256:
   `b1ad2582e7ad347ef3d6e8a81159f477d5c92c54fc8f8d66dddfa9905f4d9730`.
 

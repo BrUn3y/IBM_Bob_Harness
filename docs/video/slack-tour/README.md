@@ -28,13 +28,24 @@ For a software-only Linux renderer, `PRODUCER_FORCE_SCREENSHOT=true` and
 The tutorial intentionally works without audio. All instructions are visible
 in English, including example messages, filenames, channel names and safety
 notices. Status text matches the bot's current English messages.
-The root README uses a short animated GIF preview linked to the complete MP4.
+The root README plays the complete tutorial inline as
+`docs/media/remote-bob-slack-en.gif` (960 x 540, 8 fps), linked to the full
+1080p MP4 with playback controls. The separate 9-second preview remains
+available for release links.
 `npm run check:copy` checks the English HTML language declaration and guards
 against Spanish text from the earlier draft returning to the compositions.
 The verification script checks duration, codec, resolution, frame count and
 frame rate, decodes the file with FFmpeg, and samples every second for blank
 frames. It does not establish the semantic correctness of the illustrated
 responses; those are reviewed against the feature sources below.
+
+To reproduce the complete inline animation from the rendered MP4:
+
+```bash
+ffmpeg -i renders/remote-bob-slack-en.mp4 \
+  -filter_complex '[0:v]fps=8,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff:max_colors=128[p];[b][p]paletteuse=dither=sierra2_4a' \
+  -loop 0 renders/remote-bob-slack-en.gif
+```
 
 ## Chapters
 
